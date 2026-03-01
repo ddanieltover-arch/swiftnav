@@ -1,52 +1,44 @@
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
+const { Pool } = require('pg');
 const bcrypt = require('bcrypt');
 
-const dbPath = path.resolve(__dirname, 'database.sqlite');
-const db = new sqlite3.Database(dbPath, (err) => {
-    if (err) {
-        console.error('Error opening database ', err.message);
-    } else {
-        console.log('Connected to the SQLite database.');
+// In production (Render), DATABASE_URL is provided safely.
+// For local development, this needs to be set in .env
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
+});
+
+const initializeDatabase = async () => {
+    const client = await pool.connect();
+    try {
+        console.log('✅ Connected to PostgreSQL database.');
 
         // Create Users Table
-        db.run(`CREATE TABLE IF NOT EXISTS Users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+        await client.query(`CREATE TABLE IF NOT EXISTS Users (
+            id SERIAL PRIMARY KEY,
             name TEXT,
             email TEXT UNIQUE,
             password_hash TEXT,
             role TEXT DEFAULT 'user',
             is_auto INTEGER DEFAULT 0,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
             reset_code TEXT,
-            reset_expires DATETIME
-        )`, (err) => {
-            if (err) console.error("Error creating Users table", err);
-            else {
-                // Migrate existing tables if they don't have the new fields
-                db.run(`ALTER TABLE Users ADD COLUMN created_at DATETIME`, () => {
-                    // Backfill existing rows with a timestamp
-                    db.run(`UPDATE Users SET created_at = CURRENT_TIMESTAMP WHERE created_at IS NULL`, () => { });
-                });
-                db.run(`ALTER TABLE Users ADD COLUMN reset_code TEXT`, () => { });
-                db.run(`ALTER TABLE Users ADD COLUMN reset_expires DATETIME`, () => { });
+            reset_expires TIMESTAMPTZ
+        )`);
 
-                // Seed Admin User
-                db.get(`SELECT * FROM Users WHERE email = ?`, ['admin@swiftnav.com'], async (err, row) => {
-                    if (!err && !row) {
-                        const hash = await bcrypt.hash('password123', 10);
-                        db.run(`INSERT INTO Users (name, email, password_hash, role) VALUES (?, ?, ?, ?)`,
-                            ['System Admin', 'admin@swiftnav.com', hash, 'admin']);
-                        console.log('Admin user seeded (admin@swiftnav.com / password123)');
-                    }
-                });
-            }
-        });
+        // Seed Admin User
+        const adminCheck = await client.query('SELECT * FROM Users WHERE email = $1', ['admin@swiftnav.com']);
+        if (adminCheck.rows.length === 0) {
+            const hash = await bcrypt.hash('password123', 10);
+            await client.query('INSERT INTO Users (name, email, password_hash, role) VALUES ($1, $2, $3, $4)',
+                ['System Admin', 'admin@swiftnav.com', hash, 'admin']);
+            console.log('✅ Admin user seeded (admin@swiftnav.com / password123)');
+        }
 
         // Create Shipments Table
-        db.run(`CREATE TABLE IF NOT EXISTS Shipments (
+        await client.query(`CREATE TABLE IF NOT EXISTS Shipments (
             tracking_number TEXT PRIMARY KEY,
-            user_id INTEGER,
+            user_id INTEGER REFERENCES Users(id),
             shipment_type TEXT,
             carrier TEXT,
             sender_name TEXT,
@@ -68,29 +60,79 @@ const db = new sqlite3.Database(dbPath, (err) => {
             description TEXT,
             origin TEXT,
             destination TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            is_deleted INTEGER DEFAULT 0,
-            FOREIGN KEY(user_id) REFERENCES Users(id)
-        )`, (err) => {
-            if (err) console.error("Error creating Shipments table", err);
-        });
-
-        // Patch existing Shipments table just in case it was created before Module 12
-        db.run(`ALTER TABLE Shipments ADD COLUMN is_deleted INTEGER DEFAULT 0`, () => { });
+            created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+            is_deleted INTEGER DEFAULT 0
+        )`);
 
         // Create TrackingEvents Table
-        db.run(`CREATE TABLE IF NOT EXISTS TrackingEvents (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            tracking_number TEXT,
+        await client.query(`CREATE TABLE IF NOT EXISTS TrackingEvents (
+            id SERIAL PRIMARY KEY,
+            tracking_number TEXT REFERENCES Shipments(tracking_number) ON DELETE CASCADE,
             status_marker TEXT,
             location TEXT,
             description TEXT,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(tracking_number) REFERENCES Shipments(tracking_number)
-        )`, (err) => {
-            if (err) console.error("Error creating TrackingEvents table", err);
-        });
+            timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+    } catch (err) {
+        console.error('❌ Database Initialization Error:', err.message);
+    } finally {
+        client.release();
     }
-});
+};
+
+// Utility to convert SQLite '?' to Postgres '$1, $2, ...'
+const sqliteToPg = (query) => {
+    let index = 1;
+    return query.replace(/\?/g, () => `$${index++}`);
+};
+
+const db = {
+    query: (text, params) => pool.query(sqliteToPg(text), params),
+
+    // SQLite compatibility wrappers
+    get: (text, params, callback) => {
+        pool.query(sqliteToPg(text), params)
+            .then(res => {
+                if (callback) callback(null, res.rows[0]);
+            })
+            .catch(err => {
+                if (callback) callback(err);
+            });
+    },
+    all: (text, params, callback) => {
+        pool.query(sqliteToPg(text), params)
+            .then(res => {
+                if (callback) callback(null, res.rows);
+            })
+            .catch(err => {
+                if (callback) callback(err);
+            });
+    },
+    run: function (text, params, callback) {
+        // Handle optional params
+        if (typeof params === 'function') {
+            callback = params;
+            params = [];
+        }
+
+        pool.query(sqliteToPg(text), params)
+            .then(res => {
+                // SQLite's this.lastID and this.changes workaround
+                const result = {
+                    lastID: res.rows && res.rows[0] && res.rows[0].id ? res.rows[0].id : null,
+                    changes: res.rowCount
+                };
+                if (callback) callback.call(result, null);
+            })
+            .catch(err => {
+                if (callback) callback(err);
+            });
+    },
+    serialize: (fn) => fn()
+};
+
+// Auto-init for now, or export init function
+initializeDatabase();
 
 module.exports = db;
