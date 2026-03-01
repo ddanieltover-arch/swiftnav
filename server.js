@@ -19,14 +19,16 @@ let transporter;
 if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
     transporter = nodemailer.createTransport({
         host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-        port: parseInt(process.env.EMAIL_PORT) || 587,
-        secure: false,
+        port: 465, // Use SSL port for better cloud compatibility
+        secure: true, // true for port 465
         auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS
         },
-        logger: true, // Enable logging to console for debugging
-        debug: true   // Include SMTP traffic in logs
+        timeout: 10000, // 10s connection timeout
+        greetingTimeout: 5000,
+        logger: true,
+        debug: true
     });
     transporter.verify((err) => {
         if (err) {
