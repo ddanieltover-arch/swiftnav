@@ -20,16 +20,22 @@ if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
     transporter = nodemailer.createTransport({
         host: process.env.EMAIL_HOST || 'smtp.gmail.com',
         port: parseInt(process.env.EMAIL_PORT) || 587,
-        secure: false, // true for 465, false for other ports
+        secure: false,
         auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS
-        }
+        },
+        logger: true, // Enable logging to console for debugging
+        debug: true   // Include SMTP traffic in logs
     });
     transporter.verify((err) => {
         if (err) {
-            console.error('Email transporter verification failed:', err.message);
-            console.log('Emails will not be sent. Check your .env EMAIL_* settings.');
+            console.error('❌ EMAIL ERROR:', err.message);
+            console.log('--- SMTP DEBUG INFO ---');
+            console.log('User:', process.env.EMAIL_USER);
+            console.log('Host:', process.env.EMAIL_HOST || 'smtp.gmail.com');
+            console.log('Port:', process.env.EMAIL_PORT || '587');
+            console.log('-----------------------');
         } else {
             console.log('✅ Email transporter ready — Gmail SMTP connected.');
         }
