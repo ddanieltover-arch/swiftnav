@@ -46,21 +46,22 @@
     </nav>
 
     <!-- Page Header -->
-    <header class="hero"
-        style="min-height: 40vh; padding-top: 8rem; background: linear-gradient(135deg, var(--clr-secondary) 0%, #1e293b 100%);">
-        <div class="hero-content">
+    <header class="hero" style="min-height: 40vh; padding-top: 8rem;">
+        <div class="video-bg-container">
+            <video autoplay muted loop playsinline class="lazy-video"
+                data-src="https://cdn.pixabay.com/video/2021/08/30/86877-594246067_tiny.mp4">
+            </video>
+        </div>
+        <div class="hero-content reveal">
             <h1>Warehousing & Fulfillment</h1>
             <p>Smart storage and distribution to help your brand grow faster.</p>
         </div>
-        <div class="hero-bg"
-            style="background-image: radial-gradient(circle at 15% 50%, rgba(249, 115, 22, 0.1), transparent 30%);">
-        </div>
     </header>
 
-    <section style="padding: 6rem 0;">
+    <section style="padding: 6rem 0;" class="reveal">
         <div class="container">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;">
-                <div>
+                <div class="fade-left">
                     <h2 style="margin-bottom: 2rem; color: var(--clr-secondary);">More Than Just Storage</h2>
                     <p style="margin-bottom: 1.5rem;">Efficient warehousing is the heartbeat of a successful supply
                         chain. SwiftNav Logistics provides secure, technology-driven storage solutions that give you
@@ -84,32 +85,31 @@
                         </div>
                     </div>
                 </div>
-                <div>
+                <div class="fade-right delay-200">
                     <div
-                        style="background: white; padding: 3rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); border: 1px solid var(--clr-border);">
-                        <h3 style="margin-bottom: 1.5rem; text-align: center;">Our Warehouse Standards</h3>
-                        <ul style="list-style: none; padding: 0;">
-                            <li style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
-                                <div style="color: var(--clr-success); flex-shrink: 0;">✓</div>
-                                <div><strong>Climate Controlled:</strong> Specialized storage zones for sensitive
-                                    electronics, perishables, or chemicals.</div>
-                            </li>
-                            <li style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
-                                <div style="color: var(--clr-success); flex-shrink: 0;">✓</div>
-                                <div><strong>24/7 Security:</strong> State-of-the-art surveillance and restricted access
-                                    for maximum cargo safety.</div>
-                            </li>
-                            <li style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
-                                <div style="color: var(--clr-success); flex-shrink: 0;">✓</div>
-                                <div><strong>Cross-Docking:</strong> Rapid transfer systems to move goods from receiving
-                                    to outbound with zero storage time.</div>
-                            </li>
-                            <li style="display: flex; gap: 1rem;">
-                                <div style="color: var(--clr-success); flex-shrink: 0;">✓</div>
-                                <div><strong>Custom Labeling:</strong> Specialized kitting, re-packaging, and branding
-                                    to make your shipments shine.</div>
-                            </li>
-                        </ul>
+                        style="background: white; padding: 0; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); border: 1px solid var(--clr-border); overflow: hidden;">
+                        <img src="img/warehousing.png" alt="Warehousing"
+                            style="width: 100%; display: block; filter: brightness(0.95);">
+                        <div style="padding: 2.5rem;">
+                            <h3 style="margin-bottom: 1.5rem; text-align: center;">Our Warehouse Standards</h3>
+                            <ul style="list-style: none; padding: 0;">
+                                <li style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+                                    <div style="color: var(--clr-success); flex-shrink: 0;">✓</div>
+                                    <div><strong>Climate Controlled:</strong> Specialized storage for sensitive
+                                        electronics.</div>
+                                </li>
+                                <li style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+                                    <div style="color: var(--clr-success); flex-shrink: 0;">✓</div>
+                                    <div><strong>24/7 Security:</strong> State-of-the-art surveillance for cargo safety.
+                                    </div>
+                                </li>
+                                <li style="display: flex; gap: 1rem;">
+                                    <div style="color: var(--clr-success); flex-shrink: 0;">✓</div>
+                                    <div><strong>Cross-Docking:</strong> Rapid transfer systems for outbound goods.
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -200,6 +200,7 @@
     </div>
 
     <script src="script.js"></script>
+    <script src="performance.js"></script>
 </body>
 
 </html>

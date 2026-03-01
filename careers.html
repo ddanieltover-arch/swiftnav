@@ -46,9 +46,13 @@
     </nav>
 
     <!-- Page Header -->
-    <header class="hero"
-        style="min-height: 50vh; padding-top: 8rem; background: linear-gradient(rgba(15, 23, 42, 0.7), rgba(15, 23, 42, 0.7)), url('https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&q=80&w=1920') center/cover;">
-        <div class="hero-content">
+    <header class="hero" style="min-height: 50vh; padding-top: 8rem;">
+        <div class="video-bg-container">
+            <video autoplay muted loop playsinline class="lazy-video"
+                data-src="https://cdn.pixabay.com/video/2021/04/12/70860-536787834_tiny.mp4">
+            </video>
+        </div>
+        <div class="hero-content reveal">
             <span
                 style="color: var(--clr-primary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 1rem; display: block;">Join
                 the Team</span>
@@ -60,16 +64,16 @@
     </header>
 
     <!-- Why SwiftNav? -->
-    <section style="padding: 6rem 0;">
+    <section style="padding: 6rem 0;" class="reveal">
         <div class="container">
-            <div style="text-align: center; max-width: 800px; margin: 0 auto 4rem;">
+            <div style="text-align: center; max-width: 800px; margin: 0 auto 4rem;" class="fade-up">
                 <h2 style="margin-bottom: 1.5rem;">Why Work at SwiftNav?</h2>
                 <p>We pride ourselves on a culture of transparency, innovation, and relentless care for our clients and
                     each other. Whether you're in the warehouse or writing code, your impact is felt globally.</p>
             </div>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;">
-                <div
-                    style="background: var(--clr-surface-alt); padding: 2.5rem; border-radius: var(--radius-lg); border: 1px solid var(--clr-border);">
+                <div style="background: var(--clr-surface-alt); padding: 2.5rem; border-radius: var(--radius-lg); border: 1px solid var(--clr-border);"
+                    class="fade-up delay-100">
                     <div style="color: var(--clr-primary); margin-bottom: 1.5rem;">
                         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
@@ -80,8 +84,8 @@
                     <p style="font-size: 0.95rem;">We're disrupting traditional logistics with real-time data, AI, and
                         smart automation.</p>
                 </div>
-                <div
-                    style="background: var(--clr-surface-alt); padding: 2.5rem; border-radius: var(--radius-lg); border: 1px solid var(--clr-border);">
+                <div style="background: var(--clr-surface-alt); padding: 2.5rem; border-radius: var(--radius-lg); border: 1px solid var(--clr-border);"
+                    class="fade-up delay-200">
                     <div style="color: var(--clr-primary); margin-bottom: 1.5rem;">
                         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
@@ -93,8 +97,8 @@
                     <p style="font-size: 0.95rem;">Manage supply chains that span continents and cross borders every
                         single day.</p>
                 </div>
-                <div
-                    style="background: var(--clr-surface-alt); padding: 2.5rem; border-radius: var(--radius-lg); border: 1px solid var(--clr-border);">
+                <div style="background: var(--clr-surface-alt); padding: 2.5rem; border-radius: var(--radius-lg); border: 1px solid var(--clr-border);"
+                    class="fade-up delay-300">
                     <div style="color: var(--clr-primary); margin-bottom: 1.5rem;">
                         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
@@ -248,6 +252,7 @@
     </div>
 
     <script src="script.js"></script>
+    <script src="performance.js"></script>
 </body>
 
 </html>

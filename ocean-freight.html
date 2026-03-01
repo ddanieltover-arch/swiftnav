@@ -46,21 +46,22 @@
     </nav>
 
     <!-- Page Header -->
-    <header class="hero"
-        style="min-height: 40vh; padding-top: 8rem; background: linear-gradient(135deg, var(--clr-secondary) 0%, #0c4a6e 100%);">
-        <div class="hero-content">
+    <header class="hero" style="min-height: 40vh; padding-top: 8rem;">
+        <div class="video-bg-container">
+            <video autoplay muted loop playsinline class="lazy-video"
+                data-src="https://cdn.pixabay.com/video/2017/01/01/7133-198124806_tiny.mp4">
+            </video>
+        </div>
+        <div class="hero-content reveal">
             <h1>Ocean Freight Solutions</h1>
             <p>Reliable and efficient sea transport for global commerce.</p>
         </div>
-        <div class="hero-bg"
-            style="background-image: radial-gradient(circle at 15% 50%, rgba(16, 185, 129, 0.1), transparent 30%);">
-        </div>
     </header>
 
-    <section style="padding: 6rem 0;">
+    <section style="padding: 6rem 0;" class="reveal">
         <div class="container">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;">
-                <div>
+                <div class="fade-left">
                     <h2 style="margin-bottom: 2rem; color: var(--clr-secondary);">Global Waters, Local Expertise</h2>
                     <p style="margin-bottom: 1.5rem;">For reliable, cost-effective transport of large volume cargo,
                         SwiftNav Logistics’ ocean freight services are second to none. We manage thousands of containers
@@ -84,32 +85,31 @@
                         </div>
                     </div>
                 </div>
-                <div>
+                <div class="fade-right delay-200">
                     <div
-                        style="background: white; padding: 3rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); border: 1px solid var(--clr-border);">
-                        <h3 style="margin-bottom: 1.5rem; text-align: center;">Our Ocean Advantage</h3>
-                        <ul style="list-style: none; padding: 0;">
-                            <li style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
-                                <div style="color: var(--clr-success); flex-shrink: 0;">✓</div>
-                                <div><strong>Weekly Departures:</strong> Regular, predictable sailings across all major
-                                    global trade routes.</div>
-                            </li>
-                            <li style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
-                                <div style="color: var(--clr-success); flex-shrink: 0;">✓</div>
-                                <div><strong>Port-to-Door:</strong> Seamless integration with our ground network for
-                                    final delivery.</div>
-                            </li>
-                            <li style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
-                                <div style="color: var(--clr-success); flex-shrink: 0;">✓</div>
-                                <div><strong>Smart Routing:</strong> We use data analytics to choose the fastest and
-                                    most efficient water paths.</div>
-                            </li>
-                            <li style="display: flex; gap: 1rem;">
-                                <div style="color: var(--clr-success); flex-shrink: 0;">✓</div>
-                                <div><strong>Project Cargo:</strong> Specialized handling for oversized, heavy, or
-                                    sensitive maritime shipments.</div>
-                            </li>
-                        </ul>
+                        style="background: white; padding: 0; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); border: 1px solid var(--clr-border); overflow: hidden;">
+                        <img src="img/ocean-freight.png" alt="Ocean Freight"
+                            style="width: 100%; display: block; filter: brightness(0.95);">
+                        <div style="padding: 2.5rem;">
+                            <h3 style="margin-bottom: 1.5rem; text-align: center;">Our Ocean Advantage</h3>
+                            <ul style="list-style: none; padding: 0;">
+                                <li style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+                                    <div style="color: var(--clr-success); flex-shrink: 0;">✓</div>
+                                    <div><strong>Weekly Departures:</strong> Regular sailings across all major routes.
+                                    </div>
+                                </li>
+                                <li style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+                                    <div style="color: var(--clr-success); flex-shrink: 0;">✓</div>
+                                    <div><strong>Port-to-Door:</strong> Seamless integration with our ground network.
+                                    </div>
+                                </li>
+                                <li style="display: flex; gap: 1rem;">
+                                    <div style="color: var(--clr-success); flex-shrink: 0;">✓</div>
+                                    <div><strong>Smart Routing:</strong> Data-driven choice for the fastest water paths.
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -200,6 +200,7 @@
     </div>
 
     <script src="script.js"></script>
+    <script src="performance.js"></script>
 </body>
 
 </html>

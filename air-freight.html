@@ -46,21 +46,22 @@
     </nav>
 
     <!-- Page Header -->
-    <header class="hero"
-        style="min-height: 40vh; padding-top: 8rem; background: linear-gradient(135deg, var(--clr-secondary) 0%, #1e40af 100%);">
-        <div class="hero-content">
+    <header class="hero" style="min-height: 40vh; padding-top: 8rem;">
+        <div class="video-bg-container">
+            <video autoplay muted loop playsinline class="lazy-video"
+                data-src="https://cdn.pixabay.com/video/2018/10/24/18928-297685600_tiny.mp4">
+            </video>
+        </div>
+        <div class="hero-content reveal">
             <h1>Air Freight Solutions</h1>
             <p>Accelerate your supply chain with our worldwide air cargo network.</p>
         </div>
-        <div class="hero-bg"
-            style="background-image: radial-gradient(circle at 15% 50%, rgba(249, 115, 22, 0.2), transparent 30%);">
-        </div>
     </header>
 
-    <section style="padding: 6rem 0;">
+    <section style="padding: 6rem 0;" class="reveal">
         <div class="container">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;">
-                <div>
+                <div class="fade-left">
                     <h2 style="margin-bottom: 2rem; color: var(--clr-secondary);">Speed Without Compromise</h2>
                     <p style="margin-bottom: 1.5rem;">At SwiftNav Logistics, we understand that some shipments simply
                         cannot wait. Our air freight services are designed for your most time-sensitive, high-value, or
@@ -85,32 +86,30 @@
                         </div>
                     </div>
                 </div>
-                <div>
+                <div class="fade-right delay-200">
                     <div
-                        style="background: white; padding: 3rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); border: 1px solid var(--clr-border);">
-                        <h3 style="margin-bottom: 1.5rem; text-align: center;">Why Choose Our Air Service?</h3>
-                        <ul style="list-style: none; padding: 0;">
-                            <li style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
-                                <div style="color: var(--clr-success); flex-shrink: 0;">✓</div>
-                                <div><strong>Global Reach:</strong> Access to over 10,000 airports worldwide via our
-                                    strategic airline alliances.</div>
-                            </li>
-                            <li style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
-                                <div style="color: var(--clr-success); flex-shrink: 0;">✓</div>
-                                <div><strong>End-to-End Visibility:</strong> Real-time tracking from pickup to final
-                                    door-to-door delivery.</div>
-                            </li>
-                            <li style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
-                                <div style="color: var(--clr-success); flex-shrink: 0;">✓</div>
-                                <div><strong>Customs Expertise:</strong> Pre-clearance and automated documentation to
-                                    prevent airport delays.</div>
-                            </li>
-                            <li style="display: flex; gap: 1rem;">
-                                <div style="color: var(--clr-success); flex-shrink: 0;">✓</div>
-                                <div><strong>Risk Management:</strong> Secure handling and insurance options tailored
-                                    for air transit.</div>
-                            </li>
-                        </ul>
+                        style="background: white; padding: 0; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); border: 1px solid var(--clr-border); overflow: hidden;">
+                        <img src="img/air-freight.png" alt="Air Freight"
+                            style="width: 100%; display: block; filter: brightness(0.95);">
+                        <div style="padding: 2.5rem;">
+                            <h3 style="margin-bottom: 1.5rem; text-align: center;">Why Choose Our Air Service?</h3>
+                            <ul style="list-style: none; padding: 0;">
+                                <li style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+                                    <div style="color: var(--clr-success); flex-shrink: 0;">✓</div>
+                                    <div><strong>Global Reach:</strong> Access to over 10,000 airports worldwide.</div>
+                                </li>
+                                <li style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+                                    <div style="color: var(--clr-success); flex-shrink: 0;">✓</div>
+                                    <div><strong>End-to-End Visibility:</strong> Real-time tracking from pickup to final
+                                        door-to-door delivery.</div>
+                                </li>
+                                <li style="display: flex; gap: 1rem;">
+                                    <div style="color: var(--clr-success); flex-shrink: 0;">✓</div>
+                                    <div><strong>Customs Expertise:</strong> Pre-clearance and automated documentation.
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -201,6 +200,7 @@
     </div>
 
     <script src="script.js"></script>
+    <script src="performance.js"></script>
 </body>
 
 </html>

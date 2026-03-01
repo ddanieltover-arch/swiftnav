@@ -49,43 +49,51 @@
     </nav>
 
     <!-- Hero Section -->
-    <header class="hero"
-        style="min-height: 40vh; padding-top: 8rem; display: flex; align-items: center; justify-content: center;">
-        <div class="hero-content" style="text-align: center;">
+    <header class="hero" style="min-height: 40vh; padding-top: 8rem;">
+        <div class="video-bg-container">
+            <video autoplay muted loop playsinline class="lazy-video"
+                data-src="https://cdn.pixabay.com/video/2016/09/21/5305-183758117_tiny.mp4">
+            </video>
+        </div>
+        <div class="hero-content reveal">
             <h1>About SwiftNav</h1>
             <p style="max-width: 600px; margin: 0 auto;">Learn more about our mission to simplify worldwide freight
                 forwarding with speed, efficiency, and sustainability.</p>
         </div>
-        <div class="hero-bg"></div>
     </header>
 
-    <section class="about-section" style="padding: 4rem 0;">
+    <section class="about-section reveal" style="padding: 4rem 0;">
         <div class="container" style="max-width: 800px; text-align: center;">
-            <h2 style="margin-bottom: 2rem; color: var(--clr-primary);">Our Mission</h2>
-            <p style="font-size: 1.1rem; line-height: 1.8; color: var(--clr-text); margin-bottom: 2rem;">
-                At SwiftNav Logistics, we believe that global supply chains shouldn't be a black box. Our mission is to
-                provide transparent, reliable, and hyper-efficient freight forwarding solutions to businesses of all
-                sizes. Built on modern technology and decades of logistics expertise, we ensure your cargo reaches its
-                destination safely and on time.
-            </p>
-            <p style="font-size: 1.1rem; line-height: 1.8; color: var(--clr-text); margin-bottom: 2rem;">
-                Whether it's an urgent air freight transfer, a cost-effective ocean container, or dependable last-mile
-                ground transport, our dedicated team works around the clock to navigate the complexities of
-                international trade so you can focus on growing your business.
-            </p>
+            <div class="fade-up">
+                <h2 style="margin-bottom: 2rem; color: var(--clr-primary);">Our Mission</h2>
+                <p style="font-size: 1.1rem; line-height: 1.8; color: var(--clr-text); margin-bottom: 2rem;">
+                    At SwiftNav Logistics, we believe that global supply chains shouldn't be a black box. Our mission is
+                    to
+                    provide transparent, reliable, and hyper-efficient freight forwarding solutions to businesses of all
+                    sizes. Built on modern technology and decades of logistics expertise, we ensure your cargo reaches
+                    its
+                    destination safely and on time.
+                </p>
+                <p style="font-size: 1.1rem; line-height: 1.8; color: var(--clr-text); margin-bottom: 2rem;">
+                    Whether it's an urgent air freight transfer, a cost-effective ocean container, or dependable
+                    last-mile
+                    ground transport, our dedicated team works around the clock to navigate the complexities of
+                    international trade so you can focus on growing your business.
+                </p>
+            </div>
             <div style="display: flex; gap: 2rem; justify-content: center; margin-top: 3rem;">
-                <div
-                    style="background: var(--clr-surface-alt); padding: 2rem; border-radius: var(--radius-md); flex: 1; border: 1px solid var(--clr-border);">
+                <div class="glass-effect fade-up delay-100"
+                    style="padding: 2rem; border-radius: var(--radius-md); flex: 1; border: 1px solid var(--clr-border);">
                     <h3 style="color: var(--clr-secondary); font-size: 2rem; margin-bottom: 0.5rem;">50+</h3>
                     <p style="color: var(--clr-text-muted);">Countries Served</p>
                 </div>
-                <div
-                    style="background: var(--clr-surface-alt); padding: 2rem; border-radius: var(--radius-md); flex: 1; border: 1px solid var(--clr-border);">
+                <div class="glass-effect fade-up delay-200"
+                    style="padding: 2rem; border-radius: var(--radius-md); flex: 1; border: 1px solid var(--clr-border);">
                     <h3 style="color: var(--clr-secondary); font-size: 2rem; margin-bottom: 0.5rem;">10k+</h3>
                     <p style="color: var(--clr-text-muted);">Shipments Delivered</p>
                 </div>
-                <div
-                    style="background: var(--clr-surface-alt); padding: 2rem; border-radius: var(--radius-md); flex: 1; border: 1px solid var(--clr-border);">
+                <div class="glass-effect fade-up delay-300"
+                    style="padding: 2rem; border-radius: var(--radius-md); flex: 1; border: 1px solid var(--clr-border);">
                     <h3 style="color: var(--clr-secondary); font-size: 2rem; margin-bottom: 0.5rem;">24/7</h3>
                     <p style="color: var(--clr-text-muted);">Support Available</p>
                 </div>
@@ -236,6 +244,7 @@
     </div>
 
     <script src="script.js"></script>
+    <script src="performance.js"></script>
 </body>
 
 </html>

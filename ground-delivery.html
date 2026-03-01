@@ -46,21 +46,22 @@
     </nav>
 
     <!-- Page Header -->
-    <header class="hero"
-        style="min-height: 40vh; padding-top: 8rem; background: linear-gradient(135deg, var(--clr-secondary) 0%, #334155 100%);">
-        <div class="hero-content">
+    <header class="hero" style="min-height: 40vh; padding-top: 8rem;">
+        <div class="video-bg-container">
+            <video autoplay muted loop playsinline class="lazy-video"
+                data-src="https://cdn.pixabay.com/video/2016/11/02/6244-189679093_tiny.mp4">
+            </video>
+        </div>
+        <div class="hero-content reveal">
             <h1>Ground Delivery Solutions</h1>
             <p>Strategic trucking and last-mile logistics across the continent.</p>
         </div>
-        <div class="hero-bg"
-            style="background-image: radial-gradient(circle at 15% 50%, rgba(249, 115, 22, 0.1), transparent 30%);">
-        </div>
     </header>
 
-    <section style="padding: 6rem 0;">
+    <section style="padding: 6rem 0;" class="reveal">
         <div class="container">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;">
-                <div>
+                <div class="fade-left">
                     <h2 style="margin-bottom: 2rem; color: var(--clr-secondary);">Precision on the Pavement</h2>
                     <p style="margin-bottom: 1.5rem;">The road to efficient commerce starts with reliable ground
                         transport. SwiftNav Logistics operates a vast network of fleet partners and strategically
@@ -85,32 +86,29 @@
                         </div>
                     </div>
                 </div>
-                <div>
+                <div class="fade-right delay-200">
                     <div
-                        style="background: white; padding: 3rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); border: 1px solid var(--clr-border);">
-                        <h3 style="margin-bottom: 1.5rem; text-align: center;">Ground Network Highlighs</h3>
-                        <ul style="list-style: none; padding: 0;">
-                            <li style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
-                                <div style="color: var(--clr-success); flex-shrink: 0;">✓</div>
-                                <div><strong>Real-Time GPS Tracking:</strong> Know the exact location of your truck and
-                                    cargo 24 hours a day.</div>
-                            </li>
-                            <li style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
-                                <div style="color: var(--clr-success); flex-shrink: 0;">✓</div>
-                                <div><strong>Refrigerated Fleet:</strong> Specialized cold-chain transport for food,
-                                    medicine, and perishables.</div>
-                            </li>
-                            <li style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
-                                <div style="color: var(--clr-success); flex-shrink: 0;">✓</div>
-                                <div><strong>Optimized Routing:</strong> AI-powered route planning to avoid traffic and
-                                    reduce carbon footprint.</div>
-                            </li>
-                            <li style="display: flex; gap: 1rem;">
-                                <div style="color: var(--clr-success); flex-shrink: 0;">✓</div>
-                                <div><strong>Scalable Capacity:</strong> Access to thousands of carrier partners for
-                                    peak-season reliability.</div>
-                            </li>
-                        </ul>
+                        style="background: white; padding: 0; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); border: 1px solid var(--clr-border); overflow: hidden;">
+                        <img src="img/ground-delivery.png" alt="Ground Delivery"
+                            style="width: 100%; display: block; filter: brightness(0.95);">
+                        <div style="padding: 2.5rem;">
+                            <h3 style="margin-bottom: 1.5rem; text-align: center;">Ground Network Highlights</h3>
+                            <ul style="list-style: none; padding: 0;">
+                                <li style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+                                    <div style="color: var(--clr-success); flex-shrink: 0;">✓</div>
+                                    <div><strong>Real-Time GPS Tracking:</strong> Exact location of your cargo 24/7.
+                                    </div>
+                                </li>
+                                <li style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+                                    <div style="color: var(--clr-success); flex-shrink: 0;">✓</div>
+                                    <div><strong>Refrigerated Fleet:</strong> Specialized cold-chain transport.</div>
+                                </li>
+                                <li style="display: flex; gap: 1rem;">
+                                    <div style="color: var(--clr-success); flex-shrink: 0;">✓</div>
+                                    <div><strong>Optimized Routing:</strong> AI-powered planning to avoid traffic.</div>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -201,6 +199,7 @@
     </div>
 
     <script src="script.js"></script>
+    <script src="performance.js"></script>
 </body>
 
 </html>
