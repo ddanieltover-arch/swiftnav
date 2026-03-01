@@ -1,0 +1,24 @@
+{
+  "name": "swiftnav-logistics",
+  "version": "1.0.0",
+  "description": "SwiftNav Logistics - Worldwide Freight Forwarding Platform",
+  "main": "server.js",
+  "scripts": {
+    "start": "node -r dotenv/config server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "nodemailer": "^8.0.1",
+    "sqlite3": "^5.1.7",
+    "twilio": "^5.12.2"
+  }
+}

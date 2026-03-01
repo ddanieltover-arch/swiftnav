@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard | SwiftNav Logistics</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .dashboard-container {
+            padding: 8rem 2rem 4rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--clr-border);
+            padding-bottom: 1rem;
+        }
+
+        .shipment-list {
+            display: grid;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .shipment-card {
+            background: var(--clr-surface);
+            border: 1px solid var(--clr-border);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+
+        .shipment-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--clr-primary);
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            background: var(--clr-secondary-light);
+            color: var(--clr-secondary);
+        }
+
+        .status-badge.delivered {
+            background: #d1fae5;
+            color: #047857;
+        }
+
+        .details-pane {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            background: white;
+            border: 1px solid var(--clr-border);
+            border-radius: var(--radius-md);
+            padding: 2rem;
+            box-shadow: var(--shadow-md);
+        }
+
+        #dashboard-map {
+            width: 100%;
+            height: 400px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--clr-border);
+        }
+
+        .timeline-container {
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 1rem;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar scrolled">
+        <div class="nav-container">
+            <a href="index.html" class="brand">SwiftNav Logistics</a>
+            <div class="nav-links">
+                <a href="index.html">Home</a>
+                <button id="logout-btn" class="btn btn-secondary">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <div>
+                <h1 id="user-greeting">My Dashboard</h1>
+                <p>Manage and track your active shipments.</p>
+            </div>
+            <a href="index.html#track" class="btn btn-primary">Track New</a>
+        </div>
+
+        <div class="shipment-list" id="shipment-list">
+            <p>Loading your shipments...</p>
+        </div>
+
+        <!-- Shipment Details Section -->
+        <div id="shipment-details" class="hidden">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2 id="detail-title">Shipment Details</h2>
+                <div>
+                    <button id="more-info-btn" class="btn"
+                        style="background-color: var(--clr-primary); color: white; margin-right: 0.5rem;">More Shipping
+                        Information</button>
+                    <button id="close-details-btn" class="btn btn-secondary">Close Details</button>
+                </div>
+            </div>
+            <div class="details-pane">
+                <div class="timeline-container">
+                    <h3
+                        style="margin-bottom: 1rem; color: var(--clr-text-muted); font-size:0.875rem; text-transform:uppercase;">
+                        Tracking History</h3>
+                    <div class="tracking-timeline" id="dashboard-timeline">
+                        <!-- Timeline items injected here -->
+                        <p>Loading...</p>
+                    </div>
+                </div>
+                <div>
+                    <h3
+                        style="margin-bottom: 1rem; color: var(--clr-text-muted); font-size:0.875rem; text-transform:uppercase;">
+                        Live Map</h3>
+                    <div id="dashboard-map"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- More Shipping Information Modal (Module 21) -->
+    <div id="more-info-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 800px;">
+            <span class="close-modal" id="close-more-info">&times;</span>
+            <div class="modal-header">
+                <h2>Comprehensive Shipment Details</h2>
+                <p>Full package and routing specifications</p>
+            </div>
+
+            <div
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+                <!-- Sender Section -->
+                <div style="background: var(--clr-surface-alt); padding: 1.5rem; border-radius: var(--radius-md);">
+                    <h3
+                        style="margin-bottom: 1rem; font-size: 1rem; border-bottom: 1px solid var(--clr-border); padding-bottom: 0.5rem;">
+                        Sender Details</h3>
+                    <p><strong>Name:</strong> <span id="m-sender-name">--</span></p>
+                    <p style="margin-top: 0.5rem;"><strong>Email:</strong> <span id="m-sender-email">--</span></p>
+                    <p style="margin-top: 0.5rem;"><strong>Phone:</strong> <span id="m-sender-phone">--</span></p>
+                    <p style="margin-top: 0.5rem;"><strong>Address:</strong> <br><span id="m-sender-address">--</span>
+                    </p>
+                </div>
+
+                <!-- Receiver Section -->
+                <div style="background: var(--clr-surface-alt); padding: 1.5rem; border-radius: var(--radius-md);">
+                    <h3
+                        style="margin-bottom: 1rem; font-size: 1rem; border-bottom: 1px solid var(--clr-border); padding-bottom: 0.5rem;">
+                        Receiver Details</h3>
+                    <p><strong>Name:</strong> <span id="m-receiver-name">--</span></p>
+                    <p style="margin-top: 0.5rem;"><strong>Email:</strong> <span id="m-receiver-email">--</span></p>
+                    <p style="margin-top: 0.5rem;"><strong>Phone:</strong> <span id="m-receiver-phone">--</span></p>
+                    <p style="margin-top: 0.5rem;"><strong>Address:</strong> <br><span id="m-receiver-address">--</span>
+                    </p>
+                </div>
+
+                <!-- Package Section -->
+                <div style="background: var(--clr-surface-alt); padding: 1.5rem; border-radius: var(--radius-md);">
+                    <h3
+                        style="margin-bottom: 1rem; font-size: 1rem; border-bottom: 1px solid var(--clr-border); padding-bottom: 0.5rem;">
+                        Package Specs</h3>
+                    <p><strong>Service Type:</strong> <span id="m-service-type">--</span></p>
+                    <p style="margin-top: 0.5rem;"><strong>Courier:</strong> <span id="m-courier">--</span></p>
+                    <p style="margin-top: 0.5rem;"><strong>Weight:</strong> <span id="m-weight">--</span> kg</p>
+                    <p style="margin-top: 0.5rem;"><strong>Size (cm)*:</strong> <br><span id="m-dimensions">--</span> cm
+                    </p>
+                    <p style="margin-top: 0.5rem;"><strong>Expected Delivery:</strong> <span
+                            id="m-expected-delivery">--</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('swiftnav_token');
+            if (!token) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            document.getElementById('logout-btn').addEventListener('click', () => {
+                localStorage.removeItem('swiftnav_token');
+                localStorage.removeItem('swiftnav_role');
+                window.location.href = 'index.html';
+            });
+
+            try {
+                // Get user info
+                const userRes = await fetch('/api/auth/me', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (userRes.ok) {
+                    const userData = await userRes.json();
+                    const displayName = userData.user.name || userData.user.email.split('@')[0];
+                    document.getElementById('user-greeting').textContent = `Welcome, ${displayName}`;
+                } else {
+                    throw new Error('Unauthorized');
+                }
+
+                // Get shipments
+                const listContainer = document.getElementById('shipment-list');
+                const shipRes = await fetch('/api/user/shipments', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (shipRes.ok) {
+                    const shipments = await shipRes.json();
+
+                    if (shipments.length === 0) {
+                        listContainer.innerHTML = '<p>You have no active shipments.</p>';
+                    } else {
+                        let html = '';
+                        shipments.forEach(ship => {
+                            const isDelivered = ship.status === 'Delivered';
+                            html += `
+                                <div class="shipment-card" onclick="viewShipmentDetails('${ship.tracking_number}')">
+                                    <div>
+                                        <h3 style="margin-bottom: 0.25rem;">${ship.tracking_number}</h3>
+                                        <p style="color: var(--clr-text-muted); font-size: 0.875rem;">
+                                            To: ${ship.receiver_name || 'N/A'} | ${ship.receiver_email || 'N/A'}
+                                        </p>
+                                        <p style="color: var(--clr-text-muted); font-size: 0.75rem; margin-top: 0.5rem;">
+                                            Created: ${new Date(ship.created_at).toLocaleDateString()}
+                                        </p>
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <span class="status-badge ${isDelivered ? 'delivered' : ''}">${ship.status}</span>
+                                        <br>
+                                        <button style="margin-top: 1rem; cursor:pointer; background:none; border:none; color:var(--clr-primary); font-weight:600;">View Live Tracking &rarr;</button>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        listContainer.innerHTML = html;
+                    }
+                }
+            } catch (err) {
+                console.error(err);
+                if (err.message === 'Unauthorized') {
+                    localStorage.removeItem('swiftnav_token');
+                    window.location.href = 'index.html';
+                } else {
+                    const listContainer = document.getElementById('shipment-list');
+                    if (listContainer) {
+                        listContainer.innerHTML = '<p style="color: #ef4444;">Failed to load shipments. Please try again later.</p>';
+                    }
+                }
+            }
+        });
+
+        // Global map vars
+        let map = null;
+        let mapMarker = null;
+        let mapPolyline = null;
+        let historicalMarkers = [];
+        const geocodeCache = {};
+
+        document.getElementById('close-details-btn').addEventListener('click', () => {
+            document.getElementById('shipment-details').classList.add('hidden');
+            document.getElementById('shipment-list').classList.remove('hidden');
+        });
+
+        // Module 21: More Info Modal Listeners
+        document.getElementById('more-info-btn').addEventListener('click', () => {
+            document.getElementById('more-info-modal').classList.remove('hidden');
+        });
+        document.getElementById('close-more-info').addEventListener('click', () => {
+            document.getElementById('more-info-modal').classList.add('hidden');
+        });
+        window.addEventListener('click', (e) => {
+            if (e.target === document.getElementById('more-info-modal')) {
+                document.getElementById('more-info-modal').classList.add('hidden');
+            }
+        });
+
+        async function viewShipmentDetails(trackingNumber) {
+            document.getElementById('shipment-list').classList.add('hidden');
+            const detailsSection = document.getElementById('shipment-details');
+            detailsSection.classList.remove('hidden');
+
+            document.getElementById('detail-title').textContent = `Shipment: ${trackingNumber}`;
+            const timeline = document.getElementById('dashboard-timeline');
+            timeline.innerHTML = '<p>Loading timeline...</p>';
+
+            // Initialize Map if not already
+            if (!map) {
+                map = L.map('dashboard-map', { scrollWheelZoom: false }).setView([40.7128, -74.0060], 4);
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                    maxZoom: 20,
+                    attribution: '&copy; OpenStreetMap'
+                }).addTo(map);
+            }
+            setTimeout(() => { map.invalidateSize(); }, 300);
+
+            try {
+                const res = await fetch(`/api/track/${trackingNumber}`);
+                const data = await res.json();
+
+                if (!res.ok) {
+                    timeline.innerHTML = '<p>No history available.</p>';
+                    return;
+                }
+
+                // Populate Module 21 Modal Data
+                document.getElementById('m-sender-name').textContent = data.shipment.sender_name || 'N/A';
+                document.getElementById('m-sender-email').textContent = data.shipment.sender_email || 'N/A';
+                document.getElementById('m-sender-phone').textContent = data.shipment.sender_phone || 'N/A';
+                document.getElementById('m-sender-address').textContent = data.shipment.sender_address || 'N/A';
+                document.getElementById('m-receiver-name').textContent = data.shipment.receiver_name || 'N/A';
+                document.getElementById('m-receiver-email').textContent = data.shipment.receiver_email || 'N/A';
+                document.getElementById('m-receiver-phone').textContent = data.shipment.receiver_phone || 'N/A';
+                document.getElementById('m-receiver-address').textContent = data.shipment.receiver_address || 'N/A';
+                document.getElementById('m-service-type').textContent = data.shipment.shipment_type || 'N/A';
+                document.getElementById('m-courier').textContent = data.shipment.carrier || 'N/A';
+                document.getElementById('m-weight').textContent = data.shipment.weight || '0';
+                document.getElementById('m-dimensions').textContent = data.shipment.dimensions || '0 × 0 × 0';
+
+                const deliveryDate = data.shipment.delivery_date_time;
+                if (deliveryDate) {
+                    const dateObj = new Date(deliveryDate);
+                    const humanString = dateObj.toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                    const humanTime = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    document.getElementById('m-expected-delivery').textContent = `${humanString} at ${humanTime}`;
+                } else {
+                    document.getElementById('m-expected-delivery').textContent = 'Pending';
+                }
+
+                // Clear previous map layers
+                if (mapPolyline) { map.removeLayer(mapPolyline); mapPolyline = null; }
+                if (mapMarker) { map.removeLayer(mapMarker); mapMarker = null; }
+                historicalMarkers.forEach(m => map.removeLayer(m));
+                historicalMarkers = [];
+
+                // Update Timeline & Geocode
+                timeline.innerHTML = '';
+                const routeCoords = [];
+
+                if (data.events && data.events.length > 0) {
+                    timeline.innerHTML = '<p style="font-size: 0.875rem; color: var(--clr-text-muted);">Processing map route...</p>';
+                    const htmlEvents = [];
+
+                    // Module 18: Smart Address Formatting
+                    const formatLocation = (opt) => {
+                        if (!opt) return "Unknown Location";
+                        const parts = opt.split(',').map(s => s.trim());
+                        if (parts.length <= 2) return opt;
+                        const isUSA = parts[parts.length - 1].toLowerCase() === 'united states' || parts[parts.length - 1].toLowerCase() === 'usa';
+                        if (isUSA && parts.length >= 3) {
+                            return `${parts[parts.length - 3]}, ${parts[parts.length - 2]}`;
+                        } else if (parts.length >= 2) {
+                            return `${parts[parts.length - 2]}, ${parts[parts.length - 1]}`;
+                        }
+                        return opt;
+                    };
+
+                    for (let i = 0; i < data.events.length; i++) {
+                        const event = data.events[i];
+                        const originalLocation = event.location;
+                        event.location = formatLocation(originalLocation);
+
+                        const isLast = i === data.events.length - 1;
+                        const isDelivered = event.status_marker === 'Delivered';
+                        let statusClass = 'completed';
+                        if (isLast && !isDelivered) statusClass = 'active';
+
+                        htmlEvents.push(`
+                            <div class="timeline-item ${statusClass}" style="animation: fadeUp 0.5s ease-out ${i * 0.1}s forwards; margin-bottom: 1.5rem; position:relative; padding-left: 2rem; border-left: 2px solid ${statusClass === 'active' ? 'var(--clr-primary)' : 'var(--clr-border)'}">
+                                <div style="position:absolute; left:-6px; top:0; width:10px; height:10px; border-radius:50%; background:${statusClass === 'active' ? 'var(--clr-primary)' : 'var(--clr-border)'}"></div>
+                                <h4 style="margin:0; font-size:1rem; color:var(--clr-text);">${event.status_marker}</h4>
+                                <p style="margin:0.25rem 0; font-size:0.875rem; color:var(--clr-text-muted);">${event.location} - ${event.description}</p>
+                                <span style="font-size:0.75rem; color:var(--clr-text-muted);">${new Date(event.timestamp).toLocaleString()}</span>
+                            </div>
+                        `);
+
+                        // Geocode this event's location
+                        let baseCoords = null;
+                        if (originalLocation) {
+                            baseCoords = geocodeCache[originalLocation];
+                            if (!baseCoords) {
+                                try {
+                                    const controller = new AbortController();
+                                    const timeoutId = setTimeout(() => controller.abort(), 8000);
+                                    let geoRes = await fetch(`/api/geocode?q=${encodeURIComponent(originalLocation)}`, {
+                                        signal: controller.signal
+                                    });
+                                    clearTimeout(timeoutId);
+                                    let geoData = await geoRes.json();
+
+                                    if (!geoData.lat && !geoData.lon) {
+                                        const fallbackQuery = formatLocation(originalLocation);
+                                        if (fallbackQuery !== originalLocation) {
+                                            const ctrl2 = new AbortController();
+                                            const tid2 = setTimeout(() => ctrl2.abort(), 8000);
+                                            geoRes = await fetch(`/api/geocode?q=${encodeURIComponent(fallbackQuery)}`, {
+                                                signal: ctrl2.signal
+                                            });
+                                            clearTimeout(tid2);
+                                            geoData = await geoRes.json();
+                                        }
+                                    }
+
+                                    if (geoData.lat && geoData.lon) {
+                                        baseCoords = [geoData.lat, geoData.lon];
+                                        geocodeCache[originalLocation] = baseCoords;
+                                        await new Promise(r => setTimeout(r, 600));
+                                    }
+                                } catch (e) {
+                                    console.warn('Geocode skipped:', originalLocation);
+                                }
+                            }
+                        }
+
+                        // Fallback: use server-stored lat/lng
+                        if (!baseCoords && data.shipment.current_lat && data.shipment.current_lng) {
+                            baseCoords = [parseFloat(data.shipment.current_lat), parseFloat(data.shipment.current_lng)];
+                        }
+
+                        if (baseCoords) {
+                            const jitterLat = (Math.random() - 0.5) * 0.0005;
+                            const jitterLon = (Math.random() - 0.5) * 0.0005;
+                            const coords = [baseCoords[0] + jitterLat, baseCoords[1] + jitterLon];
+
+                            routeCoords.push(coords);
+                            if (!isLast) {
+                                if (i === 0) {
+                                    const originIcon = L.divIcon({
+                                        className: 'custom-map-marker',
+                                        html: `<div style="background-color:#22c55e; width:16px; height:16px; border-radius:50%; border:2px solid white; box-shadow:0 0 8px rgba(34,197,94,0.6);"></div>`,
+                                        iconSize: [16, 16],
+                                        iconAnchor: [8, 8]
+                                    });
+                                    const originMarker = L.marker(coords, { icon: originIcon }).bindPopup(`<strong>Origin / Sender's Address:</strong> <br> ${event.location}`);
+                                    historicalMarkers.push(originMarker);
+                                } else {
+                                    const pastMarker = L.circleMarker(coords, {
+                                        radius: 6, fillColor: "#9ca3af", color: "#ffffff",
+                                        weight: 2, opacity: 1, fillOpacity: 0.8
+                                    }).bindPopup(`<strong>Checkpoint (${event.status_marker}):</strong> <br> ${event.location}`);
+                                    historicalMarkers.push(pastMarker);
+                                }
+                            }
+                        }
+                    } // end for loop
+
+                    timeline.innerHTML = htmlEvents.join('');
+
+                    // Draw Route
+                    if (routeCoords.length > 1) {
+                        mapPolyline = L.polyline(routeCoords, {
+                            color: '#1e3a8a', weight: 3, opacity: 0.7,
+                            dashArray: '8, 8', className: 'animated-route'
+                        }).addTo(map);
+                    }
+
+                    historicalMarkers.forEach(m => m.addTo(map));
+
+                    // Draw Final Marker
+                    const latestCoords = routeCoords.length > 0 ? routeCoords[routeCoords.length - 1] : (data.shipment.current_lat ? [data.shipment.current_lat, data.shipment.current_lng] : null);
+                    if (latestCoords) {
+                        const customIcon = L.divIcon({
+                            className: 'custom-map-marker',
+                            html: `<div class="heartbeat-marker"></div>`,
+                            iconSize: [20, 20], iconAnchor: [10, 10]
+                        });
+                        mapMarker = L.marker(latestCoords, { icon: customIcon }).addTo(map);
+                        mapMarker.bindPopup(`<strong>Current Location:</strong> <br> ${data.events[data.events.length - 1].location}`).openPopup();
+                    }
+
+                    // Module 23: Map Auto-Zoom Fit Bounds
+                    setTimeout(() => {
+                        const group = new L.featureGroup();
+                        if (mapPolyline) group.addLayer(mapPolyline);
+                        if (mapMarker) group.addLayer(mapMarker);
+                        historicalMarkers.forEach(m => group.addLayer(m));
+                        if (group.getLayers().length > 0) {
+                            map.fitBounds(group.getBounds(), { padding: [50, 50], maxZoom: 15 });
+                        }
+                    }, 500);
+                } else {
+                    timeline.innerHTML = '<p>No history available.</p>';
+                }
+
+            } catch (err) {
+                console.error('viewShipmentDetails error:', err);
+                timeline.innerHTML = '<p>Error fetching shipment details.</p>';
+            }
+        }
+    </script>
+</body>
+
+</html>
