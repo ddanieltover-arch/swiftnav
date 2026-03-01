@@ -468,9 +468,10 @@ app.post('/api/admin/shipments', authenticate, isAdmin, (req, res) => {
             ],
             function (err) {
                 if (err) {
-                    console.error("Create Shipment Error:", err);
-                    return res.status(500).json({ message: 'Failed to create shipment' });
+                    console.error("❌ CREATE SHIPMENT DB ERROR:", err);
+                    return res.status(500).json({ message: 'Failed to create shipment', error: err.message });
                 }
+                console.log(`✅ Shipment ${trackingNumber} saved to DB.`);
 
                 // Add initial tracking event
                 db.run(`INSERT INTO TrackingEvents (tracking_number, status_marker, location, description, current_date_time) VALUES (?, ?, ?, ?, ?)`,
