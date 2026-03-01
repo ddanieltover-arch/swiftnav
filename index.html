@@ -30,9 +30,9 @@
             </a>
             <div class="nav-links">
                 <a href="about.html">About Us</a>
-                <a href="#services">Services</a>
-                <a href="#track">Track Shipment</a>
-                <a href="#map">Live Map</a>
+                <a href="services.html">Services</a>
+                <a href="index.html#track">Track Shipment</a>
+                <a href="index.html#map">Live Map</a>
                 <a href="#" id="nav-login-btn">Sign In</a>
                 <a href="dashboard.html" id="nav-dashboard-btn" class="hidden">Dashboard</a>
                 <a href="contact.html" class="btn btn-primary">Get a Quote</a>
@@ -88,7 +88,7 @@
                 </p>
             </div>
             <div class="services-grid">
-                <div class="service-card">
+                <a href="air-freight.html" class="service-card" style="text-decoration: none; display: block;">
                     <div class="service-icon">
                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plane">
@@ -98,8 +98,8 @@
                     </div>
                     <h3>Air Freight</h3>
                     <p>Fast and reliable worldwide air transport for your time-sensitive cargo.</p>
-                </div>
-                <div class="service-card">
+                </a>
+                <a href="ocean-freight.html" class="service-card" style="text-decoration: none; display: block;">
                     <div class="service-icon">
                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-ship">
@@ -112,8 +112,8 @@
                     </div>
                     <h3>Ocean Freight</h3>
                     <p>Cost-effective sea transport solutions with full-container and less-than-container loads.</p>
-                </div>
-                <div class="service-card">
+                </a>
+                <a href="ground-delivery.html" class="service-card" style="text-decoration: none; display: block;">
                     <div class="service-icon">
                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-truck">
@@ -125,7 +125,7 @@
                     </div>
                     <h3>Ground Freight</h3>
                     <p>Strategic last-mile delivery and dependable ground transport across North America.</p>
-                </div>
+                </a>
             </div>
         </div>
     </section>
@@ -242,22 +242,22 @@
             </div>
             <div class="footer-links">
                 <h4>Services</h4>
-                <a href="#">Air Freight</a>
-                <a href="#">Ocean Freight</a>
-                <a href="#">Ground Delivery</a>
-                <a href="#">Warehousing</a>
+                <a href="air-freight.html">Air Freight</a>
+                <a href="ocean-freight.html">Ocean Freight</a>
+                <a href="ground-delivery.html">Ground Delivery</a>
+                <a href="warehousing.html">Warehousing</a>
             </div>
             <div class="footer-links">
                 <h4>Company</h4>
                 <a href="about.html">About Us</a>
-                <a href="#">Careers</a>
+                <a href="careers.html">Careers</a>
                 <a href="#">Sustainability</a>
                 <a href="contact.html">Contact</a>
             </div>
             <div class="footer-links">
                 <h4>Legal</h4>
-                <a href="#">Privacy Policy</a>
-                <a href="#">Terms of Service</a>
+                <a href="#" id="privacy-link">Privacy Policy</a>
+                <a href="#" id="terms-link">Terms of Service</a>
             </div>
         </div>
         <div class="footer-bottom">
@@ -366,6 +366,57 @@
                 </div>
                 <button type="submit" class="btn btn-primary btn-large" style="width: 100%;">Update Password</button>
             </form>
+        </div>
+    </div>
+
+    <!-- Privacy Policy Modal -->
+    <div id="privacy-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 800px;">
+            <span class="close-modal">&times;</span>
+            <div class="modal-header">
+                <h2>Privacy Policy</h2>
+                <p>Last Updated: March 2026</p>
+            </div>
+            <div class="modal-body" style="max-height: 60vh; overflow-y: auto; padding: 0 1rem 1rem; line-height: 1.6;">
+                <p>At SwiftNav Logistics, we take your privacy seriously. This policy describes how we collect, use, and
+                    handle your data.</p>
+                <h4 style="margin-top: 1.5rem;">1. Data Collection</h4>
+                <p>We collect information necessary to provide logistics services, including names, contact details, and
+                    shipping addresses.</p>
+                <h4 style="margin-top: 1.5rem;">2. How We Use Data</h4>
+                <p>Your data is used solely to facilitate shipping, provide tracking updates, and improve our services.
+                    We never sell your data to third parties.</p>
+                <h4 style="margin-top: 1.5rem;">3. Data Security</h4>
+                <p>We use industry-standard encryption and secure servers (Supabase/PostgreSQL) to protect your
+                    sensitive information.</p>
+                <h4 style="margin-top: 1.5rem;">4. Your Rights</h4>
+                <p>You can request access to or deletion of your data at any time by contacting our support team.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Terms of Service Modal -->
+    <div id="terms-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 800px;">
+            <span class="close-modal">&times;</span>
+            <div class="modal-header">
+                <h2>Terms of Service</h2>
+                <p>Effective Date: March 2026</p>
+            </div>
+            <div class="modal-body" style="max-height: 60vh; overflow-y: auto; padding: 0 1rem 1rem; line-height: 1.6;">
+                <p>By using SwiftNav Logistics services, you agree to the following terms.</p>
+                <h4 style="margin-top: 1.5rem;">1. Service Agreement</h4>
+                <p>SwiftNav Logistics acts as a freight forwarder. We facilitate the transport of goods but are not the
+                    primary carrier unless specified.</p>
+                <h4 style="margin-top: 1.5rem;">2. Liability</h4>
+                <p>Liability for loss or damage is limited according to international conventions (e.g., Warsaw, CMR)
+                    unless additional insurance is purchased.</p>
+                <h4 style="margin-top: 1.5rem;">3. Payments</h4>
+                <p>All invoices must be settled within the agreed timeframe to ensure uninterrupted service.</p>
+                <h4 style="margin-top: 1.5rem;">4. Prohibited Items</h4>
+                <p>Customers are responsible for ensuring cargo does not contain restricted or hazardous materials
+                    without prior declaration.</p>
+            </div>
         </div>
     </div>
 

@@ -4,11 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SwiftNav Logistics | Worldwide Freight Forwarding</title>
+    <title>Warehousing & Fulfillment | SwiftNav Logistics</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
@@ -29,7 +26,7 @@
                 SwiftNav Logistics
             </a>
             <div class="nav-links">
-                <a href="about.html" class="active">About Us</a>
+                <a href="about.html">About Us</a>
                 <a href="services.html">Services</a>
                 <a href="index.html#track">Track Shipment</a>
                 <a href="index.html#map">Live Map</a>
@@ -48,46 +45,72 @@
         </div>
     </nav>
 
-    <!-- Hero Section -->
+    <!-- Page Header -->
     <header class="hero"
-        style="min-height: 40vh; padding-top: 8rem; display: flex; align-items: center; justify-content: center;">
-        <div class="hero-content" style="text-align: center;">
-            <h1>About SwiftNav</h1>
-            <p style="max-width: 600px; margin: 0 auto;">Learn more about our mission to simplify worldwide freight
-                forwarding with speed, efficiency, and sustainability.</p>
+        style="min-height: 40vh; padding-top: 8rem; background: linear-gradient(135deg, var(--clr-secondary) 0%, #1e293b 100%);">
+        <div class="hero-content">
+            <h1>Warehousing & Fulfillment</h1>
+            <p>Smart storage and distribution to help your brand grow faster.</p>
         </div>
-        <div class="hero-bg"></div>
+        <div class="hero-bg"
+            style="background-image: radial-gradient(circle at 15% 50%, rgba(249, 115, 22, 0.1), transparent 30%);">
+        </div>
     </header>
 
-    <section class="about-section" style="padding: 4rem 0;">
-        <div class="container" style="max-width: 800px; text-align: center;">
-            <h2 style="margin-bottom: 2rem; color: var(--clr-primary);">Our Mission</h2>
-            <p style="font-size: 1.1rem; line-height: 1.8; color: var(--clr-text); margin-bottom: 2rem;">
-                At SwiftNav Logistics, we believe that global supply chains shouldn't be a black box. Our mission is to
-                provide transparent, reliable, and hyper-efficient freight forwarding solutions to businesses of all
-                sizes. Built on modern technology and decades of logistics expertise, we ensure your cargo reaches its
-                destination safely and on time.
-            </p>
-            <p style="font-size: 1.1rem; line-height: 1.8; color: var(--clr-text); margin-bottom: 2rem;">
-                Whether it's an urgent air freight transfer, a cost-effective ocean container, or dependable last-mile
-                ground transport, our dedicated team works around the clock to navigate the complexities of
-                international trade so you can focus on growing your business.
-            </p>
-            <div style="display: flex; gap: 2rem; justify-content: center; margin-top: 3rem;">
-                <div
-                    style="background: var(--clr-surface-alt); padding: 2rem; border-radius: var(--radius-md); flex: 1; border: 1px solid var(--clr-border);">
-                    <h3 style="color: var(--clr-secondary); font-size: 2rem; margin-bottom: 0.5rem;">50+</h3>
-                    <p style="color: var(--clr-text-muted);">Countries Served</p>
+    <section style="padding: 6rem 0;">
+        <div class="container">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;">
+                <div>
+                    <h2 style="margin-bottom: 2rem; color: var(--clr-secondary);">More Than Just Storage</h2>
+                    <p style="margin-bottom: 1.5rem;">Efficient warehousing is the heartbeat of a successful supply
+                        chain. SwiftNav Logistics provides secure, technology-driven storage solutions that give you
+                        total control over your inventory from anywhere in the world.</p>
+                    <p style="margin-bottom: 1.5rem;">Our fulfillment centers are strategically placed near major ports
+                        and transport hubs, reducing lead times and ensuring your customers get what they need, exactly
+                        when they need it.</p>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 2rem;">
+                        <div
+                            style="background: var(--clr-surface-alt); padding: 1.5rem; border-radius: var(--radius-md);">
+                            <h4 style="color: var(--clr-primary); margin-bottom: 0.5rem;">Inventory Control</h4>
+                            <p style="font-size: 0.875rem;">Real-time stock management with 24/7 visibility into SKU
+                                levels and movement.</p>
+                        </div>
+                        <div
+                            style="background: var(--clr-surface-alt); padding: 1.5rem; border-radius: var(--radius-md);">
+                            <h4 style="color: var(--clr-primary); margin-bottom: 0.5rem;">Order Fulfillment</h4>
+                            <p style="font-size: 0.875rem;">Precise pick-and-pack services integrated with all major
+                                e-commerce platforms.</p>
+                        </div>
+                    </div>
                 </div>
-                <div
-                    style="background: var(--clr-surface-alt); padding: 2rem; border-radius: var(--radius-md); flex: 1; border: 1px solid var(--clr-border);">
-                    <h3 style="color: var(--clr-secondary); font-size: 2rem; margin-bottom: 0.5rem;">10k+</h3>
-                    <p style="color: var(--clr-text-muted);">Shipments Delivered</p>
-                </div>
-                <div
-                    style="background: var(--clr-surface-alt); padding: 2rem; border-radius: var(--radius-md); flex: 1; border: 1px solid var(--clr-border);">
-                    <h3 style="color: var(--clr-secondary); font-size: 2rem; margin-bottom: 0.5rem;">24/7</h3>
-                    <p style="color: var(--clr-text-muted);">Support Available</p>
+                <div>
+                    <div
+                        style="background: white; padding: 3rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); border: 1px solid var(--clr-border);">
+                        <h3 style="margin-bottom: 1.5rem; text-align: center;">Our Warehouse Standards</h3>
+                        <ul style="list-style: none; padding: 0;">
+                            <li style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+                                <div style="color: var(--clr-success); flex-shrink: 0;">✓</div>
+                                <div><strong>Climate Controlled:</strong> Specialized storage zones for sensitive
+                                    electronics, perishables, or chemicals.</div>
+                            </li>
+                            <li style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+                                <div style="color: var(--clr-success); flex-shrink: 0;">✓</div>
+                                <div><strong>24/7 Security:</strong> State-of-the-art surveillance and restricted access
+                                    for maximum cargo safety.</div>
+                            </li>
+                            <li style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+                                <div style="color: var(--clr-success); flex-shrink: 0;">✓</div>
+                                <div><strong>Cross-Docking:</strong> Rapid transfer systems to move goods from receiving
+                                    to outbound with zero storage time.</div>
+                            </li>
+                            <li style="display: flex; gap: 1rem;">
+                                <div style="color: var(--clr-success); flex-shrink: 0;">✓</div>
+                                <div><strong>Custom Labeling:</strong> Specialized kitting, re-packaging, and branding
+                                    to make your shipments shine.</div>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
@@ -125,65 +148,6 @@
         </div>
     </footer>
 
-    <!-- Login Modal -->
-    <div id="login-modal" class="modal hidden">
-        <div class="modal-content">
-            <span class="close-modal">&times;</span>
-            <div class="modal-header">
-                <h2>Sign In</h2>
-                <p>Welcome back to SwiftNav</p>
-            </div>
-            <form id="login-form">
-                <div class="form-group">
-                    <label for="email">Email Address</label>
-                    <input type="email" id="login-email" required>
-                </div>
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="login-password" required>
-                </div>
-                <div id="login-error" class="error-msg hidden">Invalid credentials.</div>
-                <button type="submit" class="btn btn-primary" style="width: 100%;">Sign In</button>
-            </form>
-            <div class="modal-footer">
-                <p>Don't have an account? <a href="#" id="show-register">Register</a></p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Register Modal -->
-    <div id="register-modal" class="modal hidden">
-        <div class="modal-content">
-            <span class="close-modal">&times;</span>
-            <div class="modal-header">
-                <h2>Create Account</h2>
-                <p>Join SwiftNav today</p>
-            </div>
-            <form id="register-form">
-                <div class="form-group">
-                    <label for="reg-name">Full Name</label>
-                    <input type="text" id="reg-name" required>
-                </div>
-                <div class="form-group">
-                    <label for="reg-email">Email Address</label>
-                    <input type="email" id="reg-email" required>
-                </div>
-                <div class="form-group">
-                    <label for="reg-password">Password</label>
-                    <input type="password" id="reg-password" required>
-                </div>
-                <div id="reg-error" class="error-msg hidden">Error registering account.</div>
-                <button type="submit" class="btn btn-primary" style="width: 100%;">Register</button>
-            </form>
-            <div class="modal-footer">
-                <p>Already have an account? <a href="#" id="show-login">Sign In</a></p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <!-- Privacy Policy Modal -->
     <div id="privacy-modal" class="modal hidden">
         <div class="modal-content" style="max-width: 800px;">

@@ -30,7 +30,7 @@
             </a>
             <div class="nav-links">
                 <a href="about.html">About Us</a>
-                <a href="index.html#services">Services</a>
+                <a href="services.html">Services</a>
                 <a href="index.html#track">Track Shipment</a>
                 <a href="index.html#map">Live Map</a>
                 <a href="index.html" id="nav-login-btn">Sign In</a>
@@ -112,22 +112,22 @@
             </div>
             <div class="footer-links">
                 <h4>Services</h4>
-                <a href="#">Air Freight</a>
-                <a href="#">Ocean Freight</a>
-                <a href="#">Ground Delivery</a>
-                <a href="#">Warehousing</a>
+                <a href="air-freight.html">Air Freight</a>
+                <a href="ocean-freight.html">Ocean Freight</a>
+                <a href="ground-delivery.html">Ground Delivery</a>
+                <a href="warehousing.html">Warehousing</a>
             </div>
             <div class="footer-links">
                 <h4>Company</h4>
                 <a href="about.html">About Us</a>
-                <a href="#">Careers</a>
+                <a href="careers.html">Careers</a>
                 <a href="#">Sustainability</a>
                 <a href="contact.html">Contact</a>
             </div>
             <div class="footer-links">
                 <h4>Legal</h4>
-                <a href="#">Privacy Policy</a>
-                <a href="#">Terms of Service</a>
+                <a href="#" id="privacy-link">Privacy Policy</a>
+                <a href="#" id="terms-link">Terms of Service</a>
             </div>
         </div>
         <div class="footer-bottom">
@@ -194,6 +194,57 @@
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <!-- Privacy Policy Modal -->
+    <div id="privacy-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 800px;">
+            <span class="close-modal">&times;</span>
+            <div class="modal-header">
+                <h2>Privacy Policy</h2>
+                <p>Last Updated: March 2026</p>
+            </div>
+            <div class="modal-body" style="max-height: 60vh; overflow-y: auto; padding: 0 1rem 1rem; line-height: 1.6;">
+                <p>At SwiftNav Logistics, we take your privacy seriously. This policy describes how we collect, use, and
+                    handle your data.</p>
+                <h4 style="margin-top: 1.5rem;">1. Data Collection</h4>
+                <p>We collect information necessary to provide logistics services, including names, contact details, and
+                    shipping addresses.</p>
+                <h4 style="margin-top: 1.5rem;">2. How We Use Data</h4>
+                <p>Your data is used solely to facilitate shipping, provide tracking updates, and improve our services.
+                    We never sell your data to third parties.</p>
+                <h4 style="margin-top: 1.5rem;">3. Data Security</h4>
+                <p>We use industry-standard encryption and secure servers (Supabase/PostgreSQL) to protect your
+                    sensitive information.</p>
+                <h4 style="margin-top: 1.5rem;">4. Your Rights</h4>
+                <p>You can request access to or deletion of your data at any time by contacting our support team.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Terms of Service Modal -->
+    <div id="terms-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 800px;">
+            <span class="close-modal">&times;</span>
+            <div class="modal-header">
+                <h2>Terms of Service</h2>
+                <p>Effective Date: March 2026</p>
+            </div>
+            <div class="modal-body" style="max-height: 60vh; overflow-y: auto; padding: 0 1rem 1rem; line-height: 1.6;">
+                <p>By using SwiftNav Logistics services, you agree to the following terms.</p>
+                <h4 style="margin-top: 1.5rem;">1. Service Agreement</h4>
+                <p>SwiftNav Logistics acts as a freight forwarder. We facilitate the transport of goods but are not the
+                    primary carrier unless specified.</p>
+                <h4 style="margin-top: 1.5rem;">2. Liability</h4>
+                <p>Liability for loss or damage is limited according to international conventions (e.g., Warsaw, CMR)
+                    unless additional insurance is purchased.</p>
+                <h4 style="margin-top: 1.5rem;">3. Payments</h4>
+                <p>All invoices must be settled within the agreed timeframe to ensure uninterrupted service.</p>
+                <h4 style="margin-top: 1.5rem;">4. Prohibited Items</h4>
+                <p>Customers are responsible for ensuring cargo does not contain restricted or hazardous materials
+                    without prior declaration.</p>
+            </div>
+        </div>
+    </div>
+
     <script src="script.js"></script>
     <script>
         document.getElementById('contact-form').addEventListener('submit', async (e) => {

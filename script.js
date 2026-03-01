@@ -37,6 +37,8 @@
     const registerModal = document.getElementById('register-modal');
     const forgotModal = document.getElementById('forgot-modal');
     const resetModal = document.getElementById('reset-modal');
+    const privacyModal = document.getElementById('privacy-modal');
+    const termsModal = document.getElementById('terms-modal');
     const closeModals = document.querySelectorAll('.close-modal');
 
     // Check if user is logged in
@@ -56,10 +58,12 @@
 
     closeModals.forEach(btn => {
         btn.addEventListener('click', () => {
-            loginModal?.classList.add('hidden');
-            registerModal?.classList.add('hidden');
-            forgotModal?.classList.add('hidden');
-            resetModal?.classList.add('hidden');
+            if (loginModal) loginModal.classList.add('hidden');
+            if (registerModal) registerModal.classList.add('hidden');
+            if (forgotModal) forgotModal.classList.add('hidden');
+            if (resetModal) resetModal.classList.add('hidden');
+            if (privacyModal) privacyModal.classList.add('hidden');
+            if (termsModal) termsModal.classList.add('hidden');
         });
     });
 
@@ -85,6 +89,17 @@
         e.preventDefault();
         forgotModal.classList.add('hidden');
         loginModal.classList.remove('hidden');
+    });
+
+    // Legal Modals
+    document.getElementById('privacy-link')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        privacyModal.classList.remove('hidden');
+    });
+
+    document.getElementById('terms-link')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        termsModal.classList.remove('hidden');
     });
 
     // Login Form Submit

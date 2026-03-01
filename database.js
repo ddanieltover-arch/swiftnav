@@ -9,8 +9,15 @@ const pool = new Pool({
 });
 
 const initializeDatabase = async () => {
-    const client = await pool.connect();
+    if (!process.env.DATABASE_URL) {
+        console.error('❌ CRITICAL ERROR: DATABASE_URL is not defined in environment variables.');
+        console.error('Please add DATABASE_URL (from Supabase) to your Render environment settings.');
+        return;
+    }
+
+    let client;
     try {
+        client = await pool.connect();
         console.log('✅ Connected to PostgreSQL database.');
 
         // Create Users Table
@@ -76,15 +83,29 @@ const initializeDatabase = async () => {
 
     } catch (err) {
         console.error('❌ Database Initialization Error:', err.message);
+        if (err.message.includes('password authentication failed')) {
+            console.error('👉 TIP: Check if your DATABASE_URL password is correct.');
+        }
+        if (err.message.includes('self signed certificate')) {
+            console.error('👉 TIP: Ensure SSL is set to { rejectUnauthorized: false } for Supabase.');
+        }
     } finally {
-        client.release();
+        if (client) client.release();
     }
 };
 
 // Utility to convert SQLite '?' to Postgres '$1, $2, ...'
+// Also handles adding RETURNING id to INSERT statements to satisfy SQLite lastID calls
 const sqliteToPg = (query) => {
     let index = 1;
-    return query.replace(/\?/g, () => `$${index++}`);
+    let pgQuery = query.replace(/\?/g, () => `$${index++}`);
+
+    // Automatically add RETURNING id to INSERT statements if they don't have it
+    if (pgQuery.toUpperCase().startsWith('INSERT INTO USERS') && !pgQuery.toUpperCase().includes('RETURNING')) {
+        pgQuery += ' RETURNING id';
+    }
+
+    return pgQuery;
 };
 
 const db = {
@@ -120,19 +141,20 @@ const db = {
             .then(res => {
                 // SQLite's this.lastID and this.changes workaround
                 const result = {
-                    lastID: res.rows && res.rows[0] && res.rows[0].id ? res.rows[0].id : null,
+                    lastID: res.rows && res.rows[0] && (res.rows[0].id || res.rows[0].ID) ? (res.rows[0].id || res.rows[0].ID) : null,
                     changes: res.rowCount
                 };
                 if (callback) callback.call(result, null);
             })
             .catch(err => {
+                console.error('❌ DB RUN ERROR:', err.message, '| Query:', text);
                 if (callback) callback(err);
             });
     },
     serialize: (fn) => fn()
 };
 
-// Auto-init for now, or export init function
-initializeDatabase();
+// Auto-init with error safety
+initializeDatabase().catch(err => console.error('🔥 FATAL DB INIT ERROR:', err));
 
 module.exports = db;
