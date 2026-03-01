@@ -1,0 +1,4 @@
+[dotenv@17.3.1] injecting env (0) from .env -- tip: ⚙️  enable debug logging with { debug: true }
+Server running on port 5000
+Connected to the SQLite database.
+Ethereal Email Setup complete. Credentials: islctm6tr5kebwti@ethereal.email

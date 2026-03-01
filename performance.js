@@ -22,23 +22,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const animatableElements = document.querySelectorAll('.reveal, .fade-up, .fade-left, .fade-right, .zoom-in');
     animatableElements.forEach(el => animationObserver.observe(el));
 
-    // === Lazy Loading for Videos ===
-    const videoObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const video = entry.target;
-                if (video.dataset.src) {
-                    video.src = video.dataset.src;
-                    video.load();
-                    video.classList.remove('lazy-video');
-                }
-                videoObserver.unobserve(video);
-            }
-        });
-    });
-
-    const lazyVideos = document.querySelectorAll('video.lazy-video');
-    lazyVideos.forEach(v => videoObserver.observe(v));
 
     // === Image Optimization (Lazy Load fallback for older browsers) ===
     if (!('loading' in HTMLImageElement.prototype)) {
