@@ -707,6 +707,10 @@ svg {
     }
 
     /* Tracking Widget */
+    .tracking-widget-section {
+        margin-top: 1.5rem;
+    }
+
     .tracking-widget {
         padding: 1.5rem;
         margin-left: 1rem;
