@@ -14,6 +14,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname)); // Serve frontend files directly
 
+// === Keep-Alive / Health Endpoint ===
+app.get('/api/health', (req, res) => {
+    res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
 // === Email Setup (Production Gmail SMTP) ===
 let transporter;
 if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
@@ -926,4 +931,29 @@ app.post('/api/contact', async (req, res) => {
     res.status(200).json({ message: 'Your message has been sent successfully! We will get back to you shortly.' });
 });
 
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+
+    // === Self-Ping Keep-Alive (Render/DB sleep prevention) ===
+    const EXTERNAL_URL = process.env.RENDER_EXTERNAL_URL || process.env.BASE_URL;
+    if (EXTERNAL_URL) {
+        console.log(`📡 Keep-alive pings enabled for: ${EXTERNAL_URL}`);
+        setInterval(async () => {
+            try {
+                const https = require('https');
+                const http = require('http');
+                const protocol = EXTERNAL_URL.startsWith('https') ? https : http;
+
+                protocol.get(`${EXTERNAL_URL}/api/health`, (res) => {
+                    console.log(`💓 Keep-alive ping: ${res.statusCode}`);
+                }).on('error', (err) => {
+                    console.error('💓 Keep-alive error:', err.message);
+                });
+            } catch (err) {
+                console.error('💓 Keep-alive loop failed:', err.message);
+            }
+        }, 10 * 60 * 1000); // Every 10 minutes
+    } else {
+        console.log('⚠️ Keep-alive disabled: RENDER_EXTERNAL_URL or BASE_URL not set.');
+    }
+});

@@ -157,4 +157,16 @@ const db = {
 // Auto-init with error safety
 initializeDatabase().catch(err => console.error('🔥 FATAL DB INIT ERROR:', err));
 
+// === Database Keep-Alive (Supabase/Neon sleep prevention) ===
+if (process.env.DATABASE_URL) {
+    setInterval(async () => {
+        try {
+            await db.query('SELECT 1');
+            console.log('🧬 DB Keep-alive: Connection active');
+        } catch (err) {
+            console.error('🧬 DB Keep-alive error:', err.message);
+        }
+    }, 5 * 60 * 1000); // Every 5 minutes
+}
+
 module.exports = db;
