@@ -330,9 +330,16 @@ svg {
     background: var(--clr-surface);
     padding: 2.5rem;
     border-radius: var(--radius-md);
-    box-shadow: var(--shadow-md);
-    transition: transform var(--transition-normal), box-shadow var(--transition-normal);
-    border: 1px solid transparent;
+    background: white;
+    padding: 2.5rem;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid var(--clr-border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
 }
 
 .service-card:hover {
@@ -344,9 +351,9 @@ svg {
 .service-icon {
     width: 64px;
     height: 64px;
-    background: var(--clr-secondary-light);
-    color: var(--clr-secondary);
-    border-radius: var(--radius-sm);
+    background: var(--clr-surface-alt);
+    color: var(--clr-primary);
+    border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     justify-content: center;

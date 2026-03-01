@@ -19,6 +19,38 @@ app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+// === Geocoding Proxy (Nominatim) ===
+app.get('/api/geocode', async (req, res) => {
+    const { q } = req.query;
+    if (!q) return res.status(400).json({ message: 'Missing search query' });
+
+    try {
+        const https = require('https');
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`;
+
+        https.get(url, { headers: { 'User-Agent': 'SwiftNavLogisticsApp/1.0' } }, (resp) => {
+            let data = '';
+            resp.on('data', (chunk) => { data += chunk; });
+            resp.on('end', () => {
+                try {
+                    const parsed = JSON.parse(data);
+                    if (parsed && parsed.length > 0) {
+                        res.json({ lat: parsed[0].lat, lon: parsed[0].lon });
+                    } else {
+                        res.json({});
+                    }
+                } catch (e) {
+                    res.status(500).json({ message: 'Failed to parse geocode response' });
+                }
+            });
+        }).on("error", (err) => {
+            res.status(500).json({ message: 'Geocoding service error', error: err.message });
+        });
+    } catch (err) {
+        res.status(500).json({ message: 'Server error during geocoding' });
+    }
+});
+
 // === Email Setup (Production Gmail SMTP) ===
 let transporter;
 if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
