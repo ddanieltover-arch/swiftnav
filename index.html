@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="en">
 
@@ -451,4 +452,459 @@
     <script src="performance.js"></script>
 </body>
 
+=======
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SwiftNav Logistics | Worldwide Freight Forwarding</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="brand">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-ship">
+                    <path d="M2.38 18c1.62-.64 3.03-1 4.62-1s3 .36 4.62 1c1.59.64 3.03 1 4.62 1s3-.36 4.62-1" />
+                    <path d="m19 12-1 3H5l-1-3" />
+                    <path d="M5 12 7 6l2-1h4l2 1 2 6" />
+                    <path d="M12 2v2" />
+                    <path d="M10 2h4" />
+                </svg>
+                SwiftNav Logistics
+            </a>
+            <div class="nav-links">
+                <a href="about.html">About Us</a>
+                <a href="services.html">Services</a>
+                <a href="index.html#track">Track Shipment</a>
+                <a href="index.html#map">Live Map</a>
+                <a href="#" id="nav-login-btn">Sign In</a>
+                <a href="dashboard.html" id="nav-dashboard-btn" class="hidden">Dashboard</a>
+                <a href="contact.html" class="btn btn-primary">Get a Quote</a>
+            </div>
+            <button class="mobile-menu-btn" aria-label="Toggle Menu">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-menu">
+                    <path d="M4 12h16" />
+                    <path d="M4 6h16" />
+                    <path d="M4 18h16" />
+                </svg>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero">
+        <div class="container">
+            <div class="hero-content reveal">
+                <h1>Logistics, Simplified.</h1>
+                <p>Elevate your logistics game with SwiftNav Logistics, your trusted worldwide freight forwarder focused
+                    on
+                    speed, efficiency, and sustainability.</p>
+                <div class="hero-actions">
+                    <a href="#track" class="btn btn-primary btn-large">Track a Shipment</a>
+                    <a href="#services" class="btn btn-secondary btn-large">Our Services</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Quick Tracking Widget -->
+    <section id="track" class="tracking-widget-section reveal delay-100">
+        <div class="container">
+            <div class="tracking-widget glass-effect">
+                <h2>Track Your Shipment</h2>
+                <form id="quick-track-form" class="track-form">
+                    <div style="display: flex; flex-direction: column; gap: 1rem; width: 100%;">
+                        <input type="text" id="tracking-input" placeholder="Enter Tracking Number (e.g., SNXYZ123)"
+                            required>
+                        <input type="email" id="tracking-email" placeholder="Confirm Email Address" required>
+                        <button type="submit" class="btn btn-primary">Track & View Dashboard</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services" class="services-section">
+        <div class="container">
+            <div class="section-header reveal">
+                <h2>Complete Logistics Solutions</h2>
+                <p>We provide ingenious and efficient worldwide freight forwarding solutions tailored to growing brands.
+                </p>
+            </div>
+            <div class="services-grid">
+                <a href="air-freight.html" class="service-card hover-lift reveal fade-up delay-100">
+                    <div class="image-overlay-gradient">
+                        <img src="img/air-freight.png" alt="Air Freight">
+                    </div>
+                    <div class="service-card-content">
+                        <div class="service-header">
+                            <div class="service-icon">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path
+                                        d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.2-1.1.6L3 8l5 5-2.5 2.5-2.7-.9c-.4-.1-.8.2-1 .6L1 16l3.5 2.5L7 22l.8-.8c.4-.2.7-.6.6-1l-.9-2.7L10 15l5 5h1.2c.4-.2.7-.6.6-1.1z" />
+                                </svg>
+                            </div>
+                            <h3>Air Freight</h3>
+                        </div>
+                        <p>Fast and reliable worldwide air transport for your time-sensitive cargo.</p>
+                    </div>
+                </a>
+                <a href="ocean-freight.html" class="service-card hover-lift reveal fade-up delay-200">
+                    <div class="image-overlay-gradient">
+                        <img src="img/ocean-freight.png" alt="Ocean Freight">
+                    </div>
+                    <div class="service-card-content">
+                        <div class="service-header">
+                            <div class="service-icon">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path
+                                        d="M2.38 18c1.62-.64 3.03-1 4.62-1s3 .36 4.62 1c1.59.64 3.03 1 4.62 1s3-.36 4.62-1" />
+                                    <path d="m19 12-1 3H5l-1-3" />
+                                    <path d="M5 12 7 6l2-1h4l2 1 2 6" />
+                                    <path d="M12 2v2" />
+                                    <path d="M10 2h4" />
+                                </svg>
+                            </div>
+                            <h3>Ocean Freight</h3>
+                        </div>
+                        <p>Cost-effective sea transport solutions with full-container and less-than-container loads.</p>
+                    </div>
+                </a>
+                <a href="ground-delivery.html" class="service-card hover-lift reveal fade-up delay-300">
+                    <div class="image-overlay-gradient">
+                        <img src="img/ground-delivery.png" alt="Ground Freight">
+                    </div>
+                    <div class="service-card-content">
+                        <div class="service-header">
+                            <div class="service-icon">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M5 18H3c-.6 0-1-.4-1-1V7c0-.6.4-1 1-1h10c.6 0 1 .4 1 1v11" />
+                                    <path d="M14 9h4l4 4v5c0 .6-.4 1-1 1h-2" />
+                                    <circle cx="7" cy="18" r="2" />
+                                    <circle cx="17" cy="18" r="2" />
+                                </svg>
+                            </div>
+                            <h3>Ground Freight</h3>
+                        </div>
+                        <p>Strategic last-mile delivery and dependable ground transport across North America.</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tracking Detail Section (Initially Hidden) -->
+    <section id="track" class="tracking-detail-section hidden">
+        <div class="container">
+            <div class="section-header">
+                <h2>Tracking Details</h2>
+                <p id="tracking-number-display">Shipment: Loading...</p>
+            </div>
+
+            <div class="tracking-timeline" id="tracking-timeline-container">
+                <!-- Timeline items injected here by script.js -->
+            </div>
+            <div class="tracking-details-box" id="tracking-summary-box"
+                style="margin-top: 2rem; border-top: 1px solid var(--clr-border); padding-top: 1rem;">
+                <p><strong>Receiver:</strong> <span id="track-receiver">Loading...</span></p>
+                <p><strong>Origin:</strong> <span id="track-origin">Loading...</span> | <strong>Destination:</strong>
+                    <span id="track-destination">Loading...</span>
+                </p>
+            </div>
+            <button id="close-tracking-btn" class="btn btn-secondary" style="margin-top: 2rem;">Close Tracker</button>
+        </div>
+    </section>
+
+    <!-- Instant Rate Calculator Section -->
+    <section id="rate-calculator" class="bg-light" style="padding: 4rem 0; background: var(--clr-surface-alt);">
+        <div class="container" style="max-width: 800px;">
+            <div class="section-header">
+                <h2>Instant Rate Calculator</h2>
+                <p>Get a quick estimate for your upcoming shipment without committing.</p>
+            </div>
+
+            <div
+                style="background: white; padding: 2rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-md); border: 1px solid var(--clr-border);">
+                <form id="rate-calculator-form" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                    <div class="form-group">
+                        <label>Origin (City or Zip)</label>
+                        <input type="text" id="calc-origin" required placeholder="e.g., New York, NY">
+                    </div>
+                    <div class="form-group">
+                        <label>Destination (City or Zip)</label>
+                        <input type="text" id="calc-dest" required placeholder="e.g., London, UK">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Weight (kg)</label>
+                        <input type="number" id="calc-weight" required step="0.1" min="0.1" placeholder="e.g., 5.5">
+                    </div>
+                    <div class="form-group">
+                        <label>Size (cm)*</label>
+                        <input type="text" id="calc-dim" required placeholder="e.g., 10">
+                    </div>
+
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label>Service Speed</label>
+                        <select id="calc-speed" required
+                            style="width: 100%; padding: 0.75rem; border: 1px solid var(--clr-border); border-radius: var(--radius-sm);">
+                            <option value="Standard">Standard (5-7 Days)</option>
+                            <option value="Priority">Priority (3-5 Days)</option>
+                            <option value="Express">Express (1-2 Days)</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-large" style="grid-column: span 2;">Calculate My
+                        Rate</button>
+                </form>
+
+                <!-- Results Display -->
+                <div id="calculator-results" class="hidden"
+                    style="margin-top: 2rem; padding: 1.5rem; background: var(--clr-surface-alt); border-radius: var(--radius-md); text-align: center; border: 2px dashed var(--clr-primary);">
+                    <h3 style="color: var(--clr-secondary); font-size: 1.25rem;">Estimated Cost</h3>
+                    <div style="font-size: 3rem; font-weight: 700; color: var(--clr-primary); margin: 0.5rem 0;"
+                        id="calc-result-price">$0.00</div>
+                    <p style="color: var(--clr-text-muted); font-weight: 500;" id="calc-result-time">Estimated Transit
+                        Time: -- Days</p>
+                    <p style="font-size: 0.875rem; color: var(--clr-text-light); margin-top: 1rem;">*This is an
+                        estimate. Final rates may vary based on fuel surcharges and precise volumetric weight.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Live Map Section -->
+    <section id="map" class="map-section">
+        <div class="container" style="max-width: 1400px; padding: 0;">
+            <div class="section-header map-header">
+                <h2>SwiftNav Live Network</h2>
+                <p>Track our global footprint and live active routes.</p>
+            </div>
+            <div id="leaflet-map" class="map-container"></div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section" id="contact">
+        <div class="container">
+            <div class="cta-content">
+                <h2>Ready to scale your logistics?</h2>
+                <p>Stop juggling multiple vendors. SwiftNav gives you everything needed to grow profitably and
+                    predictably.</p>
+                <a href="contact.html" class="btn btn-primary btn-large">Get Started Today</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container footer-grid">
+            <div class="footer-brand">
+                <h3>SwiftNav Logistics</h3>
+                <p>Worldwide trust. Available 24/7. Your care-focused partner in global supply chains.</p>
+            </div>
+            <div class="footer-links">
+                <h4>Services</h4>
+                <a href="air-freight.html">Air Freight</a>
+                <a href="ocean-freight.html">Ocean Freight</a>
+                <a href="ground-delivery.html">Ground Delivery</a>
+                <a href="warehousing.html">Warehousing</a>
+            </div>
+            <div class="footer-links">
+                <h4>Company</h4>
+                <a href="about.html">About Us</a>
+                <a href="careers.html">Careers</a>
+                <a href="#">Sustainability</a>
+                <a href="contact.html">Contact</a>
+            </div>
+            <div class="footer-links">
+                <h4>Legal</h4>
+                <a href="#" id="privacy-link">Privacy Policy</a>
+                <a href="#" id="terms-link">Terms of Service</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 SwiftNav Logistics. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="modal-header">
+                <h2>Sign In</h2>
+                <p>Welcome back to SwiftNav</p>
+            </div>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="login-email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="login-password" required>
+                </div>
+                <div id="login-error" class="error-msg hidden">Invalid credentials.</div>
+                <button type="submit" class="btn btn-primary btn-large" style="width: 100%;">Sign In</button>
+                <p style="text-align: center; margin-top: 1rem;">
+                    <a href="#" id="show-forgot"
+                        style="color: var(--clr-primary); text-decoration: none; font-size: 0.875rem;">Forgot
+                        Password?</a>
+                </p>
+            </form>
+            <div class="modal-footer">
+                <p>Don't have an account? <a href="#" id="show-register">Register</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div id="register-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="modal-header">
+                <h2>Create Account</h2>
+                <p>Join SwiftNav today</p>
+            </div>
+            <form id="register-form">
+                <div class="form-group">
+                    <label for="reg-name">Full Name</label>
+                    <input type="text" id="reg-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="reg-email">Email Address</label>
+                    <input type="email" id="reg-email" required>
+                </div>
+                <div class="form-group">
+                    <label for="reg-password">Password</label>
+                    <input type="password" id="reg-password" required>
+                </div>
+                <div id="reg-error" class="error-msg hidden">Error registering account.</div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Register</button>
+            </form>
+            <div class="modal-footer">
+                <p>Already have an account? <a href="#" id="show-login">Sign In</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div id="forgot-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal" id="close-forgot">&times;</span>
+            <div class="modal-header">
+                <h2>Recover Password</h2>
+                <p>Enter your email to receive a recovery code</p>
+            </div>
+            <form id="forgot-form" style="display: flex; flex-direction: column; gap: 1rem;">
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="forgot-email" required placeholder="name@company.com">
+                </div>
+                <button type="submit" class="btn btn-primary btn-large" style="width: 100%;">Send Code</button>
+                <p style="text-align: center; margin-top: 1rem;">Remembered your password? <a href="#"
+                        id="back-to-login" style="color: var(--clr-primary); font-weight: 500;">Back to Login</a></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Reset Password Modal -->
+    <div id="reset-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal" id="close-reset">&times;</span>
+            <div class="modal-header">
+                <h2>Set New Password</h2>
+                <p>Check your email for the 6-digit recovery code</p>
+            </div>
+            <form id="reset-form" style="display: flex; flex-direction: column; gap: 1rem;">
+                <input type="hidden" id="reset-stored-email">
+                <div class="form-group">
+                    <label>6-Digit Code</label>
+                    <input type="text" id="reset-code" required placeholder="000000" maxlength="6">
+                </div>
+                <div class="form-group">
+                    <label>New Password</label>
+                    <input type="password" id="reset-new-password" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-primary btn-large" style="width: 100%;">Update Password</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Privacy Policy Modal -->
+    <div id="privacy-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 800px;">
+            <span class="close-modal">&times;</span>
+            <div class="modal-header">
+                <h2>Privacy Policy</h2>
+                <p>Last Updated: March 2026</p>
+            </div>
+            <div class="modal-body" style="max-height: 60vh; overflow-y: auto; padding: 0 1rem 1rem; line-height: 1.6;">
+                <p>At SwiftNav Logistics, we take your privacy seriously. This policy describes how we collect, use, and
+                    handle your data.</p>
+                <h4 style="margin-top: 1.5rem;">1. Data Collection</h4>
+                <p>We collect information necessary to provide logistics services, including names, contact details, and
+                    shipping addresses.</p>
+                <h4 style="margin-top: 1.5rem;">2. How We Use Data</h4>
+                <p>Your data is used solely to facilitate shipping, provide tracking updates, and improve our services.
+                    We never sell your data to third parties.</p>
+                <h4 style="margin-top: 1.5rem;">3. Data Security</h4>
+                <p>We use industry-standard encryption and secure servers (Supabase/PostgreSQL) to protect your
+                    sensitive information.</p>
+                <h4 style="margin-top: 1.5rem;">4. Your Rights</h4>
+                <p>You can request access to or deletion of your data at any time by contacting our support team.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Terms of Service Modal -->
+    <div id="terms-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 800px;">
+            <span class="close-modal">&times;</span>
+            <div class="modal-header">
+                <h2>Terms of Service</h2>
+                <p>Effective Date: March 2026</p>
+            </div>
+            <div class="modal-body" style="max-height: 60vh; overflow-y: auto; padding: 0 1rem 1rem; line-height: 1.6;">
+                <p>By using SwiftNav Logistics services, you agree to the following terms.</p>
+                <h4 style="margin-top: 1.5rem;">1. Service Agreement</h4>
+                <p>SwiftNav Logistics acts as a freight forwarder. We facilitate the transport of goods but are not the
+                    primary carrier unless specified.</p>
+                <h4 style="margin-top: 1.5rem;">2. Liability</h4>
+                <p>Liability for loss or damage is limited according to international conventions (e.g., Warsaw, CMR)
+                    unless additional insurance is purchased.</p>
+                <h4 style="margin-top: 1.5rem;">3. Payments</h4>
+                <p>All invoices must be settled within the agreed timeframe to ensure uninterrupted service.</p>
+                <h4 style="margin-top: 1.5rem;">4. Prohibited Items</h4>
+                <p>Customers are responsible for ensuring cargo does not contain restricted or hazardous materials
+                    without prior declaration.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="script.js"></script>
+    <script src="performance.js"></script>
+</body>
+
+>>>>>>> 476c560e65a8e190856a18d4f45f0957bc1fe99d
 </html>
