@@ -194,7 +194,13 @@ app.post('/api/auth/register', async (req, res) => {
     try {
         const hash = await bcrypt.hash(password, 10);
         db.run(`INSERT INTO Users (name, email, password_hash) VALUES (?, ?, ?)`, [name, email, hash], function (err) {
-            if (err) return res.status(400).json({ message: 'Email already exists' });
+            if (err) {
+                console.error('❌ REGISTRATION ERROR:', err.message);
+                if (err.message.includes('UNIQUE') || err.message.includes('already exists')) {
+                    return res.status(400).json({ message: 'Email already exists' });
+                }
+                return res.status(500).json({ message: 'Database error', detail: err.message });
+            }
 
             // Send welcome email with credentials and security notice
             if (transporter) {
@@ -258,7 +264,11 @@ app.post('/api/auth/register', async (req, res) => {
 app.post('/api/auth/login', (req, res) => {
     const { email, password } = req.body;
     db.get(`SELECT * FROM Users WHERE email = ?`, [email], async (err, user) => {
-        if (err || !user) return res.status(400).json({ message: 'Invalid email or password' });
+        if (err) {
+            console.error('❌ LOGIN DB ERROR:', err.message);
+            return res.status(500).json({ message: 'Database error', detail: err.message });
+        }
+        if (!user) return res.status(400).json({ message: 'Invalid email or password' });
 
         const validPassword = await bcrypt.compare(password, user.password_hash);
         if (!validPassword) return res.status(400).json({ message: 'Invalid email or password' });

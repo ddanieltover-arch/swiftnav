@@ -33,6 +33,14 @@ const initializeDatabase = async () => {
             reset_expires TIMESTAMPTZ
         )`);
 
+        // Migration: Ensure 'role' column exists (for older schemas)
+        try {
+            await client.query(`ALTER TABLE Users ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'user'`);
+            await client.query(`ALTER TABLE Users ADD COLUMN IF NOT EXISTS is_auto INTEGER DEFAULT 0`);
+        } catch (e) {
+            console.log('ℹ️ Users table migrations skipped or already applied.');
+        }
+
         // Seed Admin User
         const adminCheck = await client.query('SELECT * FROM Users WHERE email = $1', ['admin@swiftnav.com']);
         if (adminCheck.rows.length === 0) {
