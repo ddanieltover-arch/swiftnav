@@ -48,6 +48,9 @@ const initializeDatabase = async () => {
             await client.query('INSERT INTO Users (name, email, password_hash, role) VALUES ($1, $2, $3, $4)',
                 ['System Admin', 'admin@swiftnav.com', hash, 'admin']);
             console.log('✅ Admin user seeded (admin@swiftnav.com / password123)');
+        } else if (adminCheck.rows[0].role !== 'admin') {
+            await client.query('UPDATE Users SET role = $1 WHERE email = $2', ['admin', 'admin@swiftnav.com']);
+            console.log('✅ Admin user role corrected to admin');
         }
 
         // Create Shipments Table
