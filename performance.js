@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 /**
  * SwiftNav Logistics - Performance & Animation System
  * Handles scroll-triggered animations and media optimization.
@@ -40,46 +39,3 @@ document.addEventListener('DOMContentLoaded', () => {
         lazyImages.forEach(img => imgObserver.observe(img));
     }
 });
-=======
-/**
- * SwiftNav Logistics - Performance & Animation System
- * Handles scroll-triggered animations and media optimization.
- */
-
-document.addEventListener('DOMContentLoaded', () => {
-    // === Scroll-Triggered Animations ===
-    const animationObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('animate-in');
-                // stop observing once animated
-                animationObserver.unobserve(entry.target);
-            }
-        });
-    }, {
-        threshold: 0.1, // Trigger when 10% of element is visible
-        rootMargin: '0px 0px -50px 0px' // Trigger slightly before it enters the view
-    });
-
-    // Elements to animate
-    const animatableElements = document.querySelectorAll('.reveal, .fade-up, .fade-left, .fade-right, .zoom-in');
-    animatableElements.forEach(el => animationObserver.observe(el));
-
-
-    // === Image Optimization (Lazy Load fallback for older browsers) ===
-    if (!('loading' in HTMLImageElement.prototype)) {
-        // Simple fallback for browsers without native loading="lazy"
-        const lazyImages = document.querySelectorAll('img[loading="lazy"]');
-        const imgObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const img = entry.target;
-                    img.src = img.dataset.src || img.src;
-                    imgObserver.unobserve(img);
-                }
-            });
-        });
-        lazyImages.forEach(img => imgObserver.observe(img));
-    }
-});
->>>>>>> 476c560e65a8e190856a18d4f45f0957bc1fe99d
