@@ -122,7 +122,7 @@
                 localStorage.setItem('swiftnav_role', data.user.role);
                 window.location.href = data.user.role === 'admin' ? 'admin.html' : 'dashboard.html';
             } else {
-                errorMsg.textContent = data.message;
+                errorMsg.textContent = data.message + (data.detail ? `: ${data.detail}` : '');
                 errorMsg.classList.remove('hidden');
             }
         } catch (err) {
@@ -159,7 +159,7 @@
                 localStorage.setItem('swiftnav_role', loginData.user.role);
                 window.location.href = 'dashboard.html';
             } else {
-                errorMsg.textContent = data.message;
+                errorMsg.textContent = data.message + (data.detail ? `: ${data.detail}` : '');
                 errorMsg.classList.remove('hidden');
             }
         } catch (err) {

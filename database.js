@@ -82,6 +82,24 @@ const initializeDatabase = async () => {
             is_deleted INTEGER DEFAULT 0
         )`);
 
+        // Migration: Add columns to Shipments if they are missing
+        const shipmentColumns = [
+            'shipment_type', 'carrier', 'sender_name', 'sender_phone', 'sender_email', 'sender_address',
+            'receiver_name', 'receiver_phone', 'receiver_email', 'receiver_address',
+            'weight', 'dimensions', 'current_lat', 'current_lng', 'status',
+            'current_date_time', 'departure_date_time', 'delivery_date_time',
+            'description', 'origin', 'destination', 'is_deleted'
+        ];
+
+        for (const col of shipmentColumns) {
+            try {
+                const type = (col === 'weight' || col === 'current_lat' || col === 'current_lng') ? 'REAL' : (col === 'is_deleted' ? 'INTEGER DEFAULT 0' : 'TEXT');
+                await client.query(`ALTER TABLE Shipments ADD COLUMN IF NOT EXISTS ${col} ${type}`);
+            } catch (e) {
+                // Ignore errors if columns already exist or other issues
+            }
+        }
+
         // Create TrackingEvents Table
         await client.query(`CREATE TABLE IF NOT EXISTS TrackingEvents (
             id SERIAL PRIMARY KEY,
@@ -111,9 +129,18 @@ const sqliteToPg = (query) => {
     let index = 1;
     let pgQuery = query.replace(/\?/g, () => `$${index++}`);
 
-    // Automatically add RETURNING id to INSERT statements if they don't have it
-    if (pgQuery.toUpperCase().startsWith('INSERT INTO USERS') && !pgQuery.toUpperCase().includes('RETURNING')) {
-        pgQuery += ' RETURNING id';
+    // Automatically add RETURNING id/tracking_number to INSERT statements
+    const upperQuery = pgQuery.toUpperCase().trim();
+    if (upperQuery.startsWith('INSERT INTO')) {
+        if (!upperQuery.includes('RETURNING')) {
+            if (upperQuery.includes('USERS')) {
+                pgQuery += ' RETURNING id';
+            } else if (upperQuery.includes('SHIPMENTS')) {
+                pgQuery += ' RETURNING tracking_number';
+            } else if (upperQuery.includes('TRACKINGEVENTS')) {
+                pgQuery += ' RETURNING id';
+            }
+        }
     }
 
     return pgQuery;
