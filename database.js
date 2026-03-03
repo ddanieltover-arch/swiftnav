@@ -176,6 +176,24 @@ const initializeDatabase = async () => {
             console.log('✅ Migration: added current_date_time to TrackingEvents');
         } catch (e) { /* column already exists — ignore */ }
 
+        // Migration: add is_deleted to Shipments if missing
+        try {
+            await db.query(`ALTER TABLE Shipments ADD COLUMN is_deleted INTEGER DEFAULT 0`);
+            console.log('✅ Migration: added is_deleted to Shipments');
+        } catch (e) { /* ignore */ }
+
+        // Migration: add created_at to Shipments if missing
+        try {
+            await db.query(`ALTER TABLE Shipments ADD COLUMN created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP`);
+            console.log('✅ Migration: added created_at to Shipments');
+        } catch (e) { /* ignore */ }
+
+        // Migration: add current_date_time to Shipments if missing
+        try {
+            await db.query(`ALTER TABLE Shipments ADD COLUMN current_date_time TEXT`);
+            console.log('✅ Migration: added current_date_time to Shipments');
+        } catch (e) { /* ignore */ }
+
         // Seed Admin (Awaited)
         await new Promise((resolve, reject) => {
             db.get('SELECT * FROM Users WHERE email = ?', ['admin@swiftnav.com'], async (err, user) => {

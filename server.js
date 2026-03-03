@@ -835,13 +835,14 @@ app.post('/api/admin/shipments/:trackingNumber/events', authenticate, isAdmin, a
 
 // Admin overview stats
 app.get('/api/admin/stats', authenticate, isAdmin, (req, res) => {
-    db.get(`SELECT COUNT(*) as totalShipments FROM Shipments WHERE is_deleted != 1`, (err, totalShipments) => {
-        db.get(`SELECT COUNT(*) as activeShipments FROM Shipments WHERE status != 'Delivered' AND is_deleted != 1`, (err, activeShipments) => {
-            db.get(`SELECT COUNT(*) as totalUsers FROM Users`, (err, totalUsers) => {
+    // We use COALESCE and simple aliases to ensure compatibility between SQLite and PostgreSQL (which lowercases aliases)
+    db.get(`SELECT COUNT(*) as total FROM Shipments WHERE COALESCE(is_deleted, 0) != 1`, (err, totalShipments) => {
+        db.get(`SELECT COUNT(*) as active FROM Shipments WHERE status != 'Delivered' AND COALESCE(is_deleted, 0) != 1`, (err, activeShipments) => {
+            db.get(`SELECT COUNT(*) as users FROM Users`, (err, totalUsers) => {
                 res.json({
-                    totalShipments: totalShipments ? totalShipments.totalShipments : 0,
-                    activeShipments: activeShipments ? activeShipments.activeShipments : 0,
-                    totalUsers: totalUsers ? totalUsers.totalUsers : 0
+                    totalShipments: totalShipments ? (totalShipments.total || totalShipments.totalshipments || 0) : 0,
+                    activeShipments: activeShipments ? (activeShipments.active || activeShipments.activeshipments || 0) : 0,
+                    totalUsers: totalUsers ? (totalUsers.users || totalUsers.totalusers || 0) : 0
                 });
             });
         });
