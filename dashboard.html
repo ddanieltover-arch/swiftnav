@@ -331,31 +331,37 @@
                 const res = await fetch(`/api/track/${trackingNumber}`);
                 const data = await res.json();
 
-                if (!res.ok) {
+                if (!res.ok || !data.shipment) {
+                    console.error('Shipment not found or API error:', data);
                     timeline.innerHTML = '<p>No history available.</p>';
                     return;
                 }
 
+                const s = data.shipment;
                 // Populate Module 21 Modal Data
-                document.getElementById('m-sender-name').textContent = data.shipment.sender_name || 'N/A';
-                document.getElementById('m-sender-email').textContent = data.shipment.sender_email || 'N/A';
-                document.getElementById('m-sender-phone').textContent = data.shipment.sender_phone || 'N/A';
-                document.getElementById('m-sender-address').textContent = data.shipment.sender_address || 'N/A';
-                document.getElementById('m-receiver-name').textContent = data.shipment.receiver_name || 'N/A';
-                document.getElementById('m-receiver-email').textContent = data.shipment.receiver_email || 'N/A';
-                document.getElementById('m-receiver-phone').textContent = data.shipment.receiver_phone || 'N/A';
-                document.getElementById('m-receiver-address').textContent = data.shipment.receiver_address || 'N/A';
-                document.getElementById('m-service-type').textContent = data.shipment.shipment_type || 'N/A';
-                document.getElementById('m-courier').textContent = data.shipment.carrier || 'N/A';
-                document.getElementById('m-weight').textContent = data.shipment.weight || '0';
-                document.getElementById('m-dimensions').textContent = data.shipment.dimensions || '0 × 0 × 0';
+                document.getElementById('m-sender-name').textContent = s.sender_name || 'N/A';
+                document.getElementById('m-sender-email').textContent = s.sender_email || 'N/A';
+                document.getElementById('m-sender-phone').textContent = s.sender_phone || 'N/A';
+                document.getElementById('m-sender-address').textContent = s.sender_address || 'N/A';
+                document.getElementById('m-receiver-name').textContent = s.receiver_name || 'N/A';
+                document.getElementById('m-receiver-email').textContent = s.receiver_email || 'N/A';
+                document.getElementById('m-receiver-phone').textContent = s.receiver_phone || 'N/A';
+                document.getElementById('m-receiver-address').textContent = s.receiver_address || 'N/A';
+                document.getElementById('m-service-type').textContent = s.shipment_type || 'N/A';
+                document.getElementById('m-courier').textContent = s.carrier || 'N/A';
+                document.getElementById('m-weight').textContent = s.weight || '0';
+                document.getElementById('m-dimensions').textContent = s.dimensions || '0 × 0 × 0';
 
-                const deliveryDate = data.shipment.delivery_date_time;
+                const deliveryDate = s.delivery_date_time;
                 if (deliveryDate) {
-                    const dateObj = new Date(deliveryDate);
-                    const humanString = dateObj.toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-                    const humanTime = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                    document.getElementById('m-expected-delivery').textContent = `${humanString} at ${humanTime}`;
+                    try {
+                        const dateObj = new Date(deliveryDate);
+                        const humanString = dateObj.toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                        const humanTime = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        document.getElementById('m-expected-delivery').textContent = `${humanString} at ${humanTime}`;
+                    } catch (e) {
+                        document.getElementById('m-expected-delivery').textContent = 'Invalid Date';
+                    }
                 } else {
                     document.getElementById('m-expected-delivery').textContent = 'Pending';
                 }
@@ -374,16 +380,24 @@
                     timeline.innerHTML = '<p style="font-size: 0.875rem; color: var(--clr-text-muted);">Processing map route...</p>';
                     const htmlEvents = [];
 
-                    // Module 18: Smart Address Formatting
+                    // Module 18: Smart Address Formatting for Geocoding & Display
                     const formatLocation = (opt) => {
                         if (!opt) return "Unknown Location";
                         const parts = opt.split(',').map(s => s.trim());
-                        if (parts.length <= 2) return opt;
+                        if (parts.length <= 1) return opt;
+
                         const isUSA = parts[parts.length - 1].toLowerCase() === 'united states' || parts[parts.length - 1].toLowerCase() === 'usa';
-                        if (isUSA && parts.length >= 3) {
-                            return `${parts[parts.length - 3]}, ${parts[parts.length - 2]}`;
-                        } else if (parts.length >= 2) {
-                            return `${parts[parts.length - 2]}, ${parts[parts.length - 1]}`;
+                        if (isUSA) {
+                            // National (USA): City + Zip
+                            // Assuming parts = [Street, City, Zip, USA] or similar
+                            if (parts.length >= 3) {
+                                return `${parts[parts.length - 3]}, ${parts[parts.length - 2]}`;
+                            }
+                        } else {
+                            // International: City + Country
+                            if (parts.length >= 2) {
+                                return `${parts[parts.length - 2]}, ${parts[parts.length - 1]}`;
+                            }
                         }
                         return opt;
                     };
@@ -446,11 +460,15 @@
                         }
 
                         // Fallback: use server-stored lat/lng
-                        if (!baseCoords && data.shipment.current_lat && data.shipment.current_lng) {
-                            baseCoords = [parseFloat(data.shipment.current_lat), parseFloat(data.shipment.current_lng)];
+                        if (!baseCoords && data.shipment.current_lat !== undefined && data.shipment.current_lng !== undefined) {
+                            const slat = parseFloat(data.shipment.current_lat);
+                            const slng = parseFloat(data.shipment.current_lng);
+                            if (!isNaN(slat) && !isNaN(slng)) {
+                                baseCoords = [slat, slng];
+                            }
                         }
 
-                        if (baseCoords) {
+                        if (baseCoords && !isNaN(baseCoords[0]) && !isNaN(baseCoords[1])) {
                             const jitterLat = (Math.random() - 0.5) * 0.0005;
                             const jitterLon = (Math.random() - 0.5) * 0.0005;
                             const coords = [baseCoords[0] + jitterLat, baseCoords[1] + jitterLon];

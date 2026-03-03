@@ -19,36 +19,51 @@ app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// === Geocoding Proxy (Nominatim) ===
-app.get('/api/geocode', async (req, res) => {
-    const { q } = req.query;
-    if (!q) return res.status(400).json({ message: 'Missing search query' });
-
-    try {
+// === Geocoding Helper & Proxy (Nominatim) ===
+async function geocodeLocation(q) {
+    if (!q) return null;
+    return new Promise((resolve) => {
         const https = require('https');
         const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`;
-
-        https.get(url, { headers: { 'User-Agent': 'SwiftNavLogisticsApp/1.0' } }, (resp) => {
+        https.get(url, { headers: { 'User-Agent': 'SwiftNavLogisticsApp/1.1' } }, (resp) => {
             let data = '';
             resp.on('data', (chunk) => { data += chunk; });
-            resp.on('end', () => {
+            resp.on('end', async () => {
                 try {
                     const parsed = JSON.parse(data);
                     if (parsed && parsed.length > 0) {
-                        res.json({ lat: parsed[0].lat, lon: parsed[0].lon });
+                        resolve({ lat: parseFloat(parsed[0].lat), lon: parseFloat(parsed[0].lon) });
                     } else {
-                        res.json({});
+                        // Smart Fallback Logic: City + Zip (USA) or City + Country (Intl)
+                        const parts = q.split(',').map(s => s.trim());
+                        if (parts.length > 2) {
+                            const isUSA = parts[parts.length - 1].toLowerCase() === 'united states' || parts[parts.length - 1].toLowerCase() === 'usa';
+                            let fallbackQ = '';
+                            if (isUSA && parts.length >= 3) {
+                                fallbackQ = `${parts[parts.length - 3]}, ${parts[parts.length - 2]}`;
+                            } else if (parts.length >= 2) {
+                                fallbackQ = `${parts[parts.length - 2]}, ${parts[parts.length - 1]}`;
+                            }
+
+                            if (fallbackQ && fallbackQ !== q) {
+                                const fbResult = await geocodeLocation(fallbackQ);
+                                return resolve(fbResult);
+                            }
+                        }
+                        resolve(null);
                     }
-                } catch (e) {
-                    res.status(500).json({ message: 'Failed to parse geocode response' });
-                }
+                } catch (e) { resolve(null); }
             });
-        }).on("error", (err) => {
-            res.status(500).json({ message: 'Geocoding service error', error: err.message });
-        });
-    } catch (err) {
-        res.status(500).json({ message: 'Server error during geocoding' });
-    }
+        }).on("error", () => resolve(null));
+    });
+}
+
+app.get('/api/geocode', async (req, res) => {
+    const { q } = req.query;
+    if (!q) return res.status(400).json({ message: 'Missing search query' });
+    const result = await geocodeLocation(q);
+    if (result) res.json(result);
+    else res.json({ lat: null, lon: null });
 });
 
 // === Email Setup (Production Gmail SMTP) ===
@@ -67,8 +82,15 @@ if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
         tls: {
             rejectUnauthorized: false // allow self-signed certs on Render
         },
-        connectionTimeout: 15000, // 15s connection timeout
-        greetingTimeout: 10000
+        connectionTimeout: 20000,
+        greetingTimeout: 15000,
+        debug: true, // Enable debug logging
+        logger: true,  // Log to console
+        // Strict IPv4 Enforcement:
+        lookup: (hostname, options, callback) => {
+            const dns = require('dns');
+            dns.lookup(hostname, { family: 4 }, callback);
+        }
     });
     transporter.verify((err) => {
         if (err) {
@@ -141,31 +163,6 @@ function buildEmailTemplate(headerTitle, headerSubtitle, bodyContent) {
     `;
 }
 
-// === Server-side Geocoding Proxy ===
-const https = require('https');
-app.get('/api/geocode', (req, res) => {
-    const q = req.query.q;
-    if (!q) return res.status(400).json({ error: 'Missing q parameter' });
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`;
-    https.get(url, { headers: { 'User-Agent': 'SwiftNavLogistics/1.0' } }, (geoRes) => {
-        let data = '';
-        geoRes.on('data', chunk => data += chunk);
-        geoRes.on('end', () => {
-            try {
-                const parsed = JSON.parse(data);
-                if (parsed && parsed.length > 0) {
-                    res.json({ lat: parseFloat(parsed[0].lat), lon: parseFloat(parsed[0].lon) });
-                } else {
-                    res.json({ lat: null, lon: null });
-                }
-            } catch (e) {
-                res.json({ lat: null, lon: null });
-            }
-        });
-    }).on('error', () => {
-        res.json({ lat: null, lon: null });
-    });
-});
 
 // === Middleware ===
 const authenticate = (req, res, next) => {
@@ -504,20 +501,27 @@ app.post('/api/admin/shipments', authenticate, isAdmin, (req, res) => {
     const trackingNumber = `SN${randomHex}`;
     const initialStatus = 'Pending';
 
-    const createShipment = (userId) => {
+    const createShipment = async (userId) => {
+        // Auto-Geocode initial position
+        const geo = await geocodeLocation(receiver_address);
+        const lat = geo ? geo.lat : null;
+        const lon = geo ? geo.lon : null;
+
         db.run(`INSERT INTO Shipments (
             tracking_number, user_id, shipment_type, carrier, 
             sender_name, sender_phone, sender_email, sender_address, 
             receiver_name, receiver_phone, receiver_email, receiver_address, 
             weight, dimensions, status, 
-            current_date_time, departure_date_time, delivery_date_time, description
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            current_date_time, departure_date_time, delivery_date_time, description,
+            current_lat, current_lng
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 trackingNumber, userId, shipment_type, carrier,
                 sender_name, sender_phone, sender_email, sender_address,
                 receiver_name, receiver_phone, user_email, receiver_address,
                 weight, dimensions, initialStatus,
-                current_date_time, departure_date_time, delivery_date_time, description
+                current_date_time, departure_date_time, delivery_date_time, description,
+                lat, lon
             ],
             function (err) {
                 if (err) {
