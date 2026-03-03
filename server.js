@@ -200,7 +200,7 @@ app.post('/api/auth/register', async (req, res) => {
                 if (errMsg.includes('unique') || errMsg.includes('already exists')) {
                     return res.status(400).json({ message: 'Email already exists', detail: 'This email is already associated with an account.' });
                 }
-                return res.status(500).json({ message: 'Database error', detail: 'An internal error occurred during registration.' });
+                return res.status(500).json({ message: 'Database error', detail: err.message });
             }
 
             // Send welcome email with credentials and security notice

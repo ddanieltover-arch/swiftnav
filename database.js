@@ -41,6 +41,10 @@ if (isProd) {
         if (err.code === 'ENETUNREACH') {
             console.error('❌ PRODUCTION DB ERROR (ENETUNREACH): Render cannot reach Supabase via IPv6.');
             console.error('💡 FIX: Use the Supabase Connection Pooler string (Session Mode) with IPv4 in Render Settings.');
+        } else if (err.message && err.message.toLowerCase().includes('password authentication failed')) {
+            console.error('❌ PRODUCTION DB ERROR: Password authentication failed.');
+            console.error('💡 FIX: Ensure your database password is URL-encoded if it contains special characters (e.g., #, @, !).');
+            console.error('   Example: MyP@ss#ord -> MyP%40ss%23ord');
         } else {
             console.error('❌ DB ERROR:', err.message);
         }
@@ -84,7 +88,16 @@ if (isProd) {
 
     db = {
         query: (text, params) => new Promise((resolve, reject) => {
-            sqliteDb.all(text, params, (err, rows) => err ? reject(err) : resolve({ rows }));
+            sqliteDb.all(text, params, (err, rows) => {
+                if (err) {
+                    // Check for unique constraint violation in SQLite
+                    if (err.message && err.message.includes('SQLITE_CONSTRAINT_UNIQUE')) {
+                        return reject({ message: 'Data conflict', detail: 'A record with this unique identifier already exists.' });
+                    }
+                    return reject({ message: 'Database error', detail: err.message });
+                }
+                resolve({ rows });
+            });
         }),
         get: (text, params, callback) => sqliteDb.get(text, params, callback),
         all: (text, params, callback) => sqliteDb.all(text, params, callback),
