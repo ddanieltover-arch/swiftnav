@@ -56,16 +56,19 @@ let transporter;
 if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
     transporter = nodemailer.createTransport({
         host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-        port: 465, // Use SSL port for better cloud compatibility
-        secure: true, // true for port 465
+        port: 587,        // Use 587 (STARTTLS) — Render blocks IPv6 on port 465
+        secure: false,    // false = STARTTLS upgrade after connection
+        requireTLS: true, // enforce TLS upgrade
+        family: 4,        // Force IPv4 — Render's free tier blocks outbound IPv6
         auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS
         },
-        timeout: 10000, // 10s connection timeout
-        greetingTimeout: 5000,
-        logger: true,
-        debug: true
+        tls: {
+            rejectUnauthorized: false // allow self-signed certs on Render
+        },
+        connectionTimeout: 15000, // 15s connection timeout
+        greetingTimeout: 10000
     });
     transporter.verify((err) => {
         if (err) {
@@ -73,10 +76,10 @@ if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
             console.log('--- SMTP DEBUG INFO ---');
             console.log('User:', process.env.EMAIL_USER);
             console.log('Host:', process.env.EMAIL_HOST || 'smtp.gmail.com');
-            console.log('Port:', process.env.EMAIL_PORT || '587');
+            console.log('Port: 587 (STARTTLS)');
             console.log('-----------------------');
         } else {
-            console.log('✅ Email transporter ready — Gmail SMTP connected.');
+            console.log('✅ Email transporter ready — Gmail SMTP/587 connected via IPv4.');
         }
     });
 } else {
