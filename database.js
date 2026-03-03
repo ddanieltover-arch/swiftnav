@@ -155,6 +155,7 @@ const initializeDatabase = async () => {
             status_marker TEXT,
             location TEXT,
             description TEXT,
+            current_date_time TEXT,
             timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
         )`;
 
@@ -168,6 +169,12 @@ const initializeDatabase = async () => {
             await db.query(`ALTER TABLE Users ADD COLUMN role TEXT DEFAULT 'user'`);
             await db.query(`ALTER TABLE Users ADD COLUMN is_auto INTEGER DEFAULT 0`);
         } catch (e) { /* ignore */ }
+
+        // Migration: add current_date_time to TrackingEvents if missing (fixes production DB)
+        try {
+            await db.query(`ALTER TABLE TrackingEvents ADD COLUMN current_date_time TEXT`);
+            console.log('✅ Migration: added current_date_time to TrackingEvents');
+        } catch (e) { /* column already exists — ignore */ }
 
         // Seed Admin (Awaited)
         await new Promise((resolve, reject) => {
