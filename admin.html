@@ -1394,19 +1394,22 @@
                     current_date_time: document.getElementById('cs-current-date').value, departure_date_time: document.getElementById('cs-departure-date').value,
                     delivery_date_time: document.getElementById('cs-delivery-date').value, description: document.getElementById('cs-desc').value
                 };
-                const res = await fetch('/api/admin/shipments', { method: 'POST', headers: fetchHeaders, body: JSON.stringify(body) });
-                if (res.ok) {
+                try {
+                    const res = await fetch('/api/admin/shipments', { method: 'POST', headers: fetchHeaders, body: JSON.stringify(body) });
                     const data = await res.json();
-                    console.log("✅ Created Shipment:", data);
-                    alert(`Created! Tracking Number: ${data.trackingNumber}`);
-                    e.target.reset();
-                    document.getElementById('create').classList.remove('visible');
-                    loadDashboard();
-                }
-                else {
-                    const data = await res.json();
-                    console.error("❌ Error creating shipment:", data);
-                    alert(`Error creating shipment: ${data.message || 'Unknown error'}`);
+                    if (res.ok) {
+                        console.log("✅ Created Shipment:", data);
+                        alert(`✅ Shipment Created!\nTracking Number: ${data.trackingNumber}\n\nEmails have been sent to the receiver and sender.`);
+                        e.target.reset();
+                        document.getElementById('create').classList.remove('visible');
+                        loadDashboard();
+                    } else {
+                        console.error("❌ Error creating shipment:", data);
+                        alert(`❌ Error creating shipment:\n${data.message || 'Unknown error'}\n${data.error || ''}`);
+                    }
+                } catch (networkErr) {
+                    console.error("❌ Network error:", networkErr);
+                    alert('Network error — could not connect to server. Please try again.');
                 }
                 btn.textContent = '🚀 Create Secure Shipment';
             });

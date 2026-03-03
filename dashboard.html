@@ -322,7 +322,10 @@
                     attribution: '&copy; OpenStreetMap'
                 }).addTo(map);
             }
-            setTimeout(() => { map.invalidateSize(); }, 300);
+            // Must call invalidateSize after the container transitions from hidden to visible
+            // Use multiple timeouts to catch slow renders
+            setTimeout(() => { map.invalidateSize(); }, 100);
+            setTimeout(() => { map.invalidateSize(); }, 400);
 
             try {
                 const res = await fetch(`/api/track/${trackingNumber}`);

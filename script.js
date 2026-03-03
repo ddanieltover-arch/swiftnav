@@ -238,13 +238,16 @@
         e.preventDefault();
         const trackingNum = trackInput.value.trim().toUpperCase();
         const email = document.getElementById('tracking-email')?.value.trim();
+        const submitBtn = trackForm.querySelector('button[type="submit"]') || trackForm.querySelector('button');
 
         if (trackingNum && email) {
+            // Disable button to prevent double-click
+            if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '🔍 Searching...'; }
+
             trackingDetailSection.classList.remove('hidden');
             trackingNumberDisplay.textContent = `Authenticating...`;
             timelineContainer.innerHTML = '<p style="text-align:center;">Securing connection...</p>';
             document.getElementById('tracking-summary-box')?.classList.add('hidden');
-            trackingDetailSection.scrollIntoView({ behavior: 'smooth' });
 
             try {
                 const res = await fetch(`/api/track`, {
@@ -259,12 +262,16 @@
                     localStorage.setItem('swiftnav_role', data.user.role);
                     window.location.href = 'dashboard.html';
                 } else {
-                    trackingNumberDisplay.textContent = 'Authentication Failed';
+                    trackingDetailSection.classList.remove('hidden');
+                    trackingDetailSection.scrollIntoView({ behavior: 'smooth' });
+                    trackingNumberDisplay.textContent = 'Not Found';
                     timelineContainer.innerHTML = `<p style="text-align:center; color:#ef4444;">${data.message || 'Please check the tracking number and email.'}</p>`;
+                    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Track Shipment'; }
                 }
             } catch (err) {
                 trackingNumberDisplay.textContent = 'Error Fetching Data';
                 timelineContainer.innerHTML = `<p style="text-align:center; color:#ef4444;">Could not connect to tracking server.</p>`;
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Track Shipment'; }
             }
         }
     });
