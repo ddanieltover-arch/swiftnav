@@ -196,10 +196,11 @@ app.post('/api/auth/register', async (req, res) => {
         db.run(`INSERT INTO Users (name, email, password_hash) VALUES (?, ?, ?)`, [name, email, hash], function (err) {
             if (err) {
                 console.error('❌ REGISTRATION ERROR:', err.message);
-                if (err.message.includes('UNIQUE') || err.message.includes('already exists')) {
-                    return res.status(400).json({ message: 'Email already exists' });
+                const errMsg = err.message.toLowerCase();
+                if (errMsg.includes('unique') || errMsg.includes('already exists')) {
+                    return res.status(400).json({ message: 'Email already exists', detail: 'This email is already associated with an account.' });
                 }
-                return res.status(500).json({ message: 'Database error', detail: err.message });
+                return res.status(500).json({ message: 'Database error', detail: 'An internal error occurred during registration.' });
             }
 
             // Send welcome email with credentials and security notice
@@ -263,7 +264,7 @@ app.post('/api/auth/register', async (req, res) => {
 
 app.post('/api/auth/login', (req, res) => {
     const { email, password } = req.body;
-    db.get(`SELECT * FROM Users WHERE email = ?`, [email], async (err, user) => {
+    db.get(`SELECT * FROM Users WHERE email = ?`, [email.toLowerCase()], async (err, user) => {
         if (err) {
             console.error('❌ LOGIN DB ERROR:', err.message);
             return res.status(500).json({ message: 'Database error', detail: err.message });

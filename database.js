@@ -1,28 +1,103 @@
 const { Pool } = require('pg');
+const sqlite3 = require('sqlite3').verbose();
+const path = require('path');
 const bcrypt = require('bcrypt');
+const fs = require('fs');
 
-// In production (Render), DATABASE_URL is provided safely.
-// For local development, this needs to be set in .env
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
-});
+const dbURL = process.env.DATABASE_URL;
+// Explicitly force SQLite if we are on localhost or if the URL is missing/commented out
+const isLocal = !dbURL || dbURL.includes('localhost') || !dbURL.startsWith('postgres');
+const isProd = !isLocal && process.env.NODE_ENV === 'production';
+
+// Log for debugging (this will help the user see what's being detected)
+console.log('🔍 Database URL detected:', dbURL ? `Present (Starts with ${dbURL.substring(0, 8)}...)` : 'None');
+console.log('🔍 isLocal:', isLocal, '| isProd:', isProd);
+
+let db;
+
+// Hybrid Database System: PostgreSQL for Production (Render), SQLite for Local
+if (isProd) {
+    console.log('🌐 Using PostgreSQL (Production Mode)');
+    const pool = new Pool({
+        connectionString: dbURL,
+        ssl: { rejectUnauthorized: false }
+    });
+
+    const sqliteToPg = (query) => {
+        let index = 1;
+        let pgQuery = query.replace(/\?/g, () => `$${index++}`);
+        const upperQuery = pgQuery.toUpperCase().trim();
+        if (upperQuery.startsWith('INSERT INTO')) {
+            if (!upperQuery.includes('RETURNING')) {
+                if (upperQuery.includes('USERS')) pgQuery += ' RETURNING id';
+                else if (upperQuery.includes('SHIPMENTS')) pgQuery += ' RETURNING tracking_number';
+                else if (upperQuery.includes('TRACKINGEVENTS')) pgQuery += ' RETURNING id';
+            }
+        }
+        return pgQuery;
+    };
+
+    const handlePoolError = (err) => {
+        if (err.code === 'ENETUNREACH') {
+            console.error('❌ PRODUCTION DB ERROR (ENETUNREACH): Render cannot reach Supabase via IPv6.');
+            console.error('💡 FIX: Use the Supabase Connection Pooler string (Session Mode) with IPv4 in Render Settings.');
+        } else {
+            console.error('❌ DB ERROR:', err.message);
+        }
+        return err;
+    };
+
+    db = {
+        query: (text, params) => {
+            if (typeof params === 'function') params = [];
+            return pool.query(sqliteToPg(text), params).catch(err => { throw handlePoolError(err); });
+        },
+        get: (text, params, callback) => {
+            if (typeof params === 'function') { callback = params; params = []; }
+            pool.query(sqliteToPg(text), params)
+                .then(res => callback(null, res.rows[0]))
+                .catch(err => callback(handlePoolError(err)));
+        },
+        all: (text, params, callback) => {
+            if (typeof params === 'function') { callback = params; params = []; }
+            pool.query(sqliteToPg(text), params)
+                .then(res => callback(null, res.rows))
+                .catch(err => callback(handlePoolError(err)));
+        },
+        run: function (text, params, callback) {
+            if (typeof params === 'function') { callback = params; params = []; }
+            pool.query(sqliteToPg(text), params)
+                .then(res => {
+                    const result = {
+                        lastID: res.rows && res.rows[0] ? (res.rows[0].id || res.rows[0].tracking_number) : null,
+                        changes: res.rowCount
+                    };
+                    if (callback) callback.call(result, null);
+                })
+                .catch(err => callback(handlePoolError(err)));
+        }
+    };
+} else {
+    console.log('🏠 Using SQLite (Local Development Mode)');
+    const dbPath = path.join(__dirname, 'database.sqlite');
+    const sqliteDb = new sqlite3.Database(dbPath);
+
+    db = {
+        query: (text, params) => new Promise((resolve, reject) => {
+            sqliteDb.all(text, params, (err, rows) => err ? reject(err) : resolve({ rows }));
+        }),
+        get: (text, params, callback) => sqliteDb.get(text, params, callback),
+        all: (text, params, callback) => sqliteDb.all(text, params, callback),
+        run: function (text, params, callback) {
+            sqliteDb.run(text, params, callback);
+        }
+    };
+}
 
 const initializeDatabase = async () => {
-    if (!process.env.DATABASE_URL) {
-        console.error('❌ CRITICAL ERROR: DATABASE_URL is not defined in environment variables.');
-        console.error('Please add DATABASE_URL (from Supabase) to your Render environment settings.');
-        return;
-    }
-
-    let client;
     try {
-        client = await pool.connect();
-        console.log('✅ Connected to PostgreSQL database.');
-
-        // Create Users Table
-        await client.query(`CREATE TABLE IF NOT EXISTS Users (
-            id SERIAL PRIMARY KEY,
+        const createUsers = `CREATE TABLE IF NOT EXISTS Users (
+            id ${isProd ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT'},
             name TEXT,
             email TEXT UNIQUE,
             password_hash TEXT,
@@ -31,32 +106,11 @@ const initializeDatabase = async () => {
             created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
             reset_code TEXT,
             reset_expires TIMESTAMPTZ
-        )`);
+        )`;
 
-        // Migration: Ensure 'role' column exists (for older schemas)
-        try {
-            await client.query(`ALTER TABLE Users ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'user'`);
-            await client.query(`ALTER TABLE Users ADD COLUMN IF NOT EXISTS is_auto INTEGER DEFAULT 0`);
-        } catch (e) {
-            console.log('ℹ️ Users table migrations skipped or already applied.');
-        }
-
-        // Seed Admin User
-        const adminCheck = await client.query('SELECT * FROM Users WHERE email = $1', ['admin@swiftnav.com']);
-        if (adminCheck.rows.length === 0) {
-            const hash = await bcrypt.hash('password123', 10);
-            await client.query('INSERT INTO Users (name, email, password_hash, role) VALUES ($1, $2, $3, $4)',
-                ['System Admin', 'admin@swiftnav.com', hash, 'admin']);
-            console.log('✅ Admin user seeded (admin@swiftnav.com / password123)');
-        } else if (adminCheck.rows[0].role !== 'admin') {
-            await client.query('UPDATE Users SET role = $1 WHERE email = $2', ['admin', 'admin@swiftnav.com']);
-            console.log('✅ Admin user role corrected to admin');
-        }
-
-        // Create Shipments Table
-        await client.query(`CREATE TABLE IF NOT EXISTS Shipments (
+        const createShipments = `CREATE TABLE IF NOT EXISTS Shipments (
             tracking_number TEXT PRIMARY KEY,
-            user_id INTEGER REFERENCES Users(id),
+            user_id INTEGER,
             shipment_type TEXT,
             carrier TEXT,
             sender_name TEXT,
@@ -80,131 +134,61 @@ const initializeDatabase = async () => {
             destination TEXT,
             created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
             is_deleted INTEGER DEFAULT 0
-        )`);
+        )`;
 
-        // Migration: Add columns to Shipments if they are missing
-        const shipmentColumns = [
-            'shipment_type', 'carrier', 'sender_name', 'sender_phone', 'sender_email', 'sender_address',
-            'receiver_name', 'receiver_phone', 'receiver_email', 'receiver_address',
-            'weight', 'dimensions', 'current_lat', 'current_lng', 'status',
-            'current_date_time', 'departure_date_time', 'delivery_date_time',
-            'description', 'origin', 'destination', 'is_deleted'
-        ];
-
-        for (const col of shipmentColumns) {
-            try {
-                const type = (col === 'weight' || col === 'current_lat' || col === 'current_lng') ? 'REAL' : (col === 'is_deleted' ? 'INTEGER DEFAULT 0' : 'TEXT');
-                await client.query(`ALTER TABLE Shipments ADD COLUMN IF NOT EXISTS ${col} ${type}`);
-            } catch (e) {
-                // Ignore errors if columns already exist or other issues
-            }
-        }
-
-        // Create TrackingEvents Table
-        await client.query(`CREATE TABLE IF NOT EXISTS TrackingEvents (
-            id SERIAL PRIMARY KEY,
-            tracking_number TEXT REFERENCES Shipments(tracking_number) ON DELETE CASCADE,
+        const createEvents = `CREATE TABLE IF NOT EXISTS TrackingEvents (
+            id ${isProd ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT'},
+            tracking_number TEXT,
             status_marker TEXT,
             location TEXT,
             description TEXT,
             timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-        )`);
+        )`;
 
-    } catch (err) {
-        console.error('❌ Database Initialization Error:', err.message);
-        if (err.message.includes('password authentication failed')) {
-            console.error('👉 TIP: Check if your DATABASE_URL password is correct.');
-        }
-        if (err.message.includes('self signed certificate')) {
-            console.error('👉 TIP: Ensure SSL is set to { rejectUnauthorized: false } for Supabase.');
-        }
-    } finally {
-        if (client) client.release();
-    }
-};
+        // Run in series
+        await db.query(createUsers);
+        await db.query(createShipments);
+        await db.query(createEvents);
 
-// Utility to convert SQLite '?' to Postgres '$1, $2, ...'
-// Also handles adding RETURNING id to INSERT statements to satisfy SQLite lastID calls
-const sqliteToPg = (query) => {
-    let index = 1;
-    let pgQuery = query.replace(/\?/g, () => `$${index++}`);
-
-    // Automatically add RETURNING id/tracking_number to INSERT statements
-    const upperQuery = pgQuery.toUpperCase().trim();
-    if (upperQuery.startsWith('INSERT INTO')) {
-        if (!upperQuery.includes('RETURNING')) {
-            if (upperQuery.includes('USERS')) {
-                pgQuery += ' RETURNING id';
-            } else if (upperQuery.includes('SHIPMENTS')) {
-                pgQuery += ' RETURNING tracking_number';
-            } else if (upperQuery.includes('TRACKINGEVENTS')) {
-                pgQuery += ' RETURNING id';
-            }
-        }
-    }
-
-    return pgQuery;
-};
-
-const db = {
-    query: (text, params) => pool.query(sqliteToPg(text), params),
-
-    // SQLite compatibility wrappers
-    get: (text, params, callback) => {
-        pool.query(sqliteToPg(text), params)
-            .then(res => {
-                if (callback) callback(null, res.rows[0]);
-            })
-            .catch(err => {
-                if (callback) callback(err);
-            });
-    },
-    all: (text, params, callback) => {
-        pool.query(sqliteToPg(text), params)
-            .then(res => {
-                if (callback) callback(null, res.rows);
-            })
-            .catch(err => {
-                if (callback) callback(err);
-            });
-    },
-    run: function (text, params, callback) {
-        // Handle optional params
-        if (typeof params === 'function') {
-            callback = params;
-            params = [];
-        }
-
-        pool.query(sqliteToPg(text), params)
-            .then(res => {
-                // SQLite's this.lastID and this.changes workaround
-                const result = {
-                    lastID: res.rows && res.rows[0] && (res.rows[0].id || res.rows[0].ID) ? (res.rows[0].id || res.rows[0].ID) : null,
-                    changes: res.rowCount
-                };
-                if (callback) callback.call(result, null);
-            })
-            .catch(err => {
-                console.error('❌ DB RUN ERROR:', err.message, '| Query:', text);
-                if (callback) callback(err);
-            });
-    },
-    serialize: (fn) => fn()
-};
-
-// Auto-init with error safety
-initializeDatabase().catch(err => console.error('🔥 FATAL DB INIT ERROR:', err));
-
-// === Database Keep-Alive (Supabase/Neon sleep prevention) ===
-if (process.env.DATABASE_URL) {
-    setInterval(async () => {
+        // Migrations
         try {
-            await db.query('SELECT 1');
-            console.log('🧬 DB Keep-alive: Connection active');
-        } catch (err) {
-            console.error('🧬 DB Keep-alive error:', err.message);
-        }
-    }, 5 * 60 * 1000); // Every 5 minutes
-}
+            await db.query(`ALTER TABLE Users ADD COLUMN role TEXT DEFAULT 'user'`);
+            await db.query(`ALTER TABLE Users ADD COLUMN is_auto INTEGER DEFAULT 0`);
+        } catch (e) { /* ignore */ }
+
+        // Seed Admin (Awaited)
+        await new Promise((resolve, reject) => {
+            db.get('SELECT * FROM Users WHERE email = ?', ['admin@swiftnav.com'], async (err, user) => {
+                if (err) return reject(err);
+                if (!user) {
+                    const hash = await bcrypt.hash('password123', 10);
+                    db.run('INSERT INTO Users (name, email, password_hash, role) VALUES (?, ?, ?, ?)',
+                        ['System Admin', 'admin@swiftnav.com', hash, 'admin'], (err) => {
+                            if (err) reject(err);
+                            else {
+                                console.log('✅ Admin account seeded: admin@swiftnav.com / password123');
+                                resolve();
+                            }
+                        });
+                } else {
+                    if (user.role !== 'admin') {
+                        db.run('UPDATE Users SET role = ? WHERE email = ?', ['admin', 'admin@swiftnav.com'], (err) => {
+                            if (err) reject(err);
+                            else resolve();
+                        });
+                    } else {
+                        resolve();
+                    }
+                }
+            });
+        });
+
+        console.log('✅ Database Schema Verified.');
+    } catch (err) {
+        console.error('❌ Database Init Error:', err.message);
+    }
+};
+
+initializeDatabase();
 
 module.exports = db;
