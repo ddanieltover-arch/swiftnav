@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const db = require('./database');
 
 const app = express();
@@ -84,48 +84,9 @@ app.get('/api/geocode', async (req, res) => {
     else res.json({ lat: null, lon: null });
 });
 
-// === Email Setup (Production Gmail SMTP) ===
-let transporter;
-if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-    transporter = nodemailer.createTransport({
-        host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-        port: 587,        // Use 587 (STARTTLS) — Render blocks IPv6 on port 465
-        secure: false,    // false = STARTTLS upgrade after connection
-        requireTLS: true, // enforce TLS upgrade
-        family: 4,        // Force IPv4 — Render's free tier blocks outbound IPv6
-        auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS
-        },
-        tls: {
-            rejectUnauthorized: false // allow self-signed certs on Render
-        },
-        connectionTimeout: 30000, // 30s connection timeout
-        greetingTimeout: 20000,   // 20s greeting timeout
-        socketTimeout: 45000,     // 45s socket timeout
-        debug: true, // Enable debug logging
-        logger: true,  // Log to console
-        // Strict IPv4 Enforcement:
-        lookup: (hostname, options, callback) => {
-            const dns = require('dns');
-            dns.lookup(hostname, { family: 4 }, callback);
-        }
-    });
-    transporter.verify((err) => {
-        if (err) {
-            console.error('❌ EMAIL ERROR:', err.message);
-            console.log('--- SMTP DEBUG INFO ---');
-            console.log('User:', process.env.EMAIL_USER);
-            console.log('Host:', process.env.EMAIL_HOST || 'smtp.gmail.com');
-            console.log('Port: 587 (STARTTLS)');
-            console.log('-----------------------');
-        } else {
-            console.log('✅ Email transporter ready — Gmail SMTP/587 connected via IPv4.');
-        }
-    });
-} else {
-    console.log('⚠️  No EMAIL_USER/EMAIL_PASS in .env — email sending disabled.');
-}
+// === Email Setup (Resend API) ===
+const resend = new Resend(process.env.RESEND_API_KEY || 're_cybDpLh4_Jha2VaMmVoYk5eMH9z77UGL1');
+console.log('✅ Resend Email API initialized.');
 
 // === Twilio SMS Setup ===
 let twilioClient = null;
@@ -554,7 +515,7 @@ app.post('/api/admin/shipments', authenticate, isAdmin, (req, res) => {
                     [trackingNumber, initialStatus, sender_address, 'Shipment created and is pending processing.', current_date_time]);
 
                 // Send welcome email to the receiver with tracking info
-                if (user_email && transporter) {
+                if (user_email) {
                     const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
                     const welcomeHtml = `
                         <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
@@ -607,8 +568,8 @@ app.post('/api/admin/shipments', authenticate, isAdmin, (req, res) => {
                         </div>
                     `;
 
-                    transporter.sendMail({
-                        from: process.env.EMAIL_FROM || '"SwiftNav Logistics" <noreply@swiftnav.com>',
+                    resend.emails.send({
+                        from: process.env.EMAIL_FROM || 'SwiftNav Logistics <noreply@swiftnav.com>',
                         to: user_email,
                         subject: `Your Shipment ${trackingNumber} Has Been Created — SwiftNav Logistics`,
                         html: welcomeHtml
@@ -620,7 +581,7 @@ app.post('/api/admin/shipments', authenticate, isAdmin, (req, res) => {
                 }
 
                 // Send confirmation email to the sender
-                if (sender_email && transporter) {
+                if (sender_email) {
                     const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
                     const senderHtml = `
                         <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
@@ -664,8 +625,8 @@ app.post('/api/admin/shipments', authenticate, isAdmin, (req, res) => {
                         </div>
                     `;
 
-                    transporter.sendMail({
-                        from: process.env.EMAIL_FROM || '"SwiftNav Logistics" <noreply@swiftnav.com>',
+                    resend.emails.send({
+                        from: process.env.EMAIL_FROM || 'SwiftNav Logistics <noreply@swiftnav.com>',
                         to: sender_email,
                         subject: `Shipment Confirmation: ${trackingNumber} — SwiftNav Logistics`,
                         html: senderHtml
@@ -799,7 +760,7 @@ app.post('/api/admin/shipments/:trackingNumber/events', authenticate, isAdmin, a
                     LEFT JOIN Users u ON s.user_id = u.id 
                     WHERE s.tracking_number = ?`, [trackingNumber], async (err, shipmentInfo) => {
 
-                if (shipmentInfo && shipmentInfo.user_email && transporter) {
+                if (shipmentInfo && shipmentInfo.user_email) {
                     try {
                         const statusColor = status_marker === 'Delivered' ? '#22c55e' : (status_marker === 'In Transit' ? '#3b82f6' : '#f59e0b');
                         const statusIcon = status_marker === 'Delivered' ? '✅' : (status_marker === 'In Transit' ? '🚚' : '📋');
@@ -827,8 +788,8 @@ app.post('/api/admin/shipments/:trackingNumber/events', authenticate, isAdmin, a
                                 <a href="${updateBaseUrl}" style="display: inline-block; background: linear-gradient(135deg, #1e3a8a, #1e40af); color: #ffffff; text-decoration: none; padding: 14px 35px; border-radius: 8px; font-weight: 600; font-size: 15px;">🔍 Track Your Shipment Live</a>
                             </div>
                         `);
-                        const info = await transporter.sendMail({
-                            from: process.env.EMAIL_FROM || '"SwiftNav Logistics" <noreply@swiftnav.com>',
+                        const info = await resend.emails.send({
+                            from: process.env.EMAIL_FROM || 'SwiftNav Logistics <noreply@swiftnav.com>',
                             to: shipmentInfo.user_email,
                             subject: `${statusIcon} Shipment Update: ${trackingNumber} — ${status_marker}`,
                             html: updateHtml
