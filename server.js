@@ -25,10 +25,23 @@ async function geocodeLocation(q) {
     return new Promise((resolve) => {
         const https = require('https');
         const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`;
+
+        let resolved = false;
+        const timer = setTimeout(() => {
+            if (!resolved) {
+                resolved = true;
+                console.warn(`Geocode timeout for: ${q}`);
+                resolve(null);
+            }
+        }, 5000); // 5 second timeout for external API
+
         https.get(url, { headers: { 'User-Agent': 'SwiftNavLogisticsApp/1.1' } }, (resp) => {
             let data = '';
             resp.on('data', (chunk) => { data += chunk; });
             resp.on('end', async () => {
+                if (resolved) return;
+                clearTimeout(timer);
+                resolved = true;
                 try {
                     const parsed = JSON.parse(data);
                     if (parsed && parsed.length > 0) {
@@ -54,7 +67,12 @@ async function geocodeLocation(q) {
                     }
                 } catch (e) { resolve(null); }
             });
-        }).on("error", () => resolve(null));
+        }).on("error", () => {
+            if (resolved) return;
+            clearTimeout(timer);
+            resolved = true;
+            resolve(null);
+        });
     });
 }
 
@@ -82,8 +100,9 @@ if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
         tls: {
             rejectUnauthorized: false // allow self-signed certs on Render
         },
-        connectionTimeout: 20000,
-        greetingTimeout: 15000,
+        connectionTimeout: 30000, // 30s connection timeout
+        greetingTimeout: 20000,   // 20s greeting timeout
+        socketTimeout: 45000,     // 45s socket timeout
         debug: true, // Enable debug logging
         logger: true,  // Log to console
         // Strict IPv4 Enforcement:
