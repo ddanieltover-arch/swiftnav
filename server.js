@@ -730,11 +730,9 @@ app.put('/api/admin/shipments/:trackingNumber', authenticate, isAdmin, (req, res
 app.delete('/api/admin/shipments/:trackingNumber', authenticate, isAdmin, (req, res) => {
     const { trackingNumber } = req.params;
 
-    // Begin a simple transaction to delete events then the shipment
-    db.serialize(() => {
-        db.run(`DELETE FROM TrackingEvents WHERE tracking_number = ?`, [trackingNumber], (err) => {
-            if (err) console.error(err);
-        });
+    // Delete events first, then the shipment (avoids db.serialize which is SQLite-only)
+    db.run(`DELETE FROM TrackingEvents WHERE tracking_number = ?`, [trackingNumber], (err) => {
+        if (err) console.error("Error deleting tracking events:", err);
 
         db.run(`DELETE FROM Shipments WHERE tracking_number = ?`, [trackingNumber], function (err) {
             if (err) return res.status(500).json({ message: 'Failed to delete shipment' });

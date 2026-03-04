@@ -458,15 +458,9 @@
                                 }
                             }
                         }
+                        // Note: Intentionally NOT falling back to data.shipment.current_lat for historical events
+                        // so that failed geocodes don't stack markers on top of the final destination.
 
-                        // Fallback: use server-stored lat/lng
-                        if (!baseCoords && data.shipment.current_lat !== undefined && data.shipment.current_lng !== undefined) {
-                            const slat = parseFloat(data.shipment.current_lat);
-                            const slng = parseFloat(data.shipment.current_lng);
-                            if (!isNaN(slat) && !isNaN(slng)) {
-                                baseCoords = [slat, slng];
-                            }
-                        }
 
                         if (baseCoords && !isNaN(baseCoords[0]) && !isNaN(baseCoords[1])) {
                             const jitterLat = (Math.random() - 0.5) * 0.0005;
@@ -520,15 +514,18 @@
                     }
 
                     // Module 23: Map Auto-Zoom Fit Bounds
+                    // Fired at 900ms to ensure it runs AFTER the final map.invalidateSize() at 850ms
                     setTimeout(() => {
                         const group = new L.featureGroup();
                         if (mapPolyline) group.addLayer(mapPolyline);
                         if (mapMarker) group.addLayer(mapMarker);
                         historicalMarkers.forEach(m => group.addLayer(m));
                         if (group.getLayers().length > 0) {
-                            map.fitBounds(group.getBounds(), { padding: [50, 50], maxZoom: 15 });
+                            map.fitBounds(group.getBounds(), { padding: [50, 50], maxZoom: 11 });
+                        } else {
+                            map.setZoom(4); // Default wide zoom if no layers
                         }
-                    }, 500);
+                    }, 900);
                 } else {
                     timeline.innerHTML = '<p>No history available.</p>';
                 }
