@@ -1203,3 +1203,235 @@ svg {
     background: rgba(15, 23, 42, 0.7) !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
+
+/* ============================================================
+   MOBILE RESPONSIVENESS — comprehensive overhaul
+   ============================================================ */
+@media (max-width: 768px) {
+
+    /* --- Base --- */
+    html {
+        font-size: 15px;
+    }
+
+    .container {
+        padding: 0 1rem;
+    }
+
+    /* --- Navbar --- */
+    .navbar .nav-links {
+        display: none;
+        flex-direction: column;
+        position: absolute;
+        top: var(--nav-height);
+        left: 0;
+        right: 0;
+        background: #fff;
+        padding: 1rem 1.5rem 1.5rem;
+        box-shadow: var(--shadow-lg);
+        gap: 0.75rem;
+        z-index: 999;
+    }
+
+    .navbar .nav-links.open {
+        display: flex;
+    }
+
+    .mobile-menu-btn {
+        display: flex !important;
+    }
+
+    /* --- Hero --- */
+    .hero {
+        padding-top: 6rem !important;
+        min-height: auto !important;
+    }
+
+    .hero h1 {
+        font-size: clamp(1.6rem, 5vw, 2.4rem);
+    }
+
+    .hero p {
+        font-size: 1rem;
+    }
+
+    .hero-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+
+    .hero-actions .btn {
+        text-align: center;
+    }
+
+    /* --- Stats row --- */
+    .hero-stats,
+    [style*="display: flex"][style*="gap"][style*="stat"],
+    .stats-row {
+        flex-direction: column !important;
+        gap: 1rem !important;
+    }
+
+    /* --- Footer grid --- */
+    .footer-grid {
+        grid-template-columns: 1fr !important;
+        gap: 2rem !important;
+    }
+
+    /* ==========================
+       CONTACT PAGE
+       Cards appear  FIRST (order:1)
+       Form appears SECOND (order:2)
+    ========================== */
+    /* The outer 2-col grid */
+    section .container[style*="grid-template-columns: 1fr 340px"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Form wrapper — push below cards */
+    section .container[style*="grid-template-columns: 1fr 340px"]>div:first-child {
+        order: 2;
+    }
+
+    /* Sidebar cards wrapper — pull above form */
+    section .container[style*="grid-template-columns: 1fr 340px"]>div:last-child {
+        order: 1;
+    }
+
+    /* Contact form inner grid */
+    #contact-form {
+        grid-template-columns: 1fr !important;
+    }
+
+    #contact-form h3,
+    #contact-form .form-group[style*="grid-column"],
+    #contact-form button,
+    #contact-form #contact-feedback {
+        grid-column: span 1 !important;
+    }
+
+    /* Contact info top bar */
+    section[style*="background: var(--clr-primary)"] .container {
+        flex-direction: column !important;
+        gap: 1rem !important;
+        align-items: flex-start !important;
+        padding: 0 1rem !important;
+    }
+
+    /* ==========================
+       SERVICE PAGES
+       (air-freight, ocean, ground, warehousing, services)
+    ========================== */
+    /* Two-column feature grids → single col */
+    [style*="grid-template-columns: repeat(2"],
+    [style*="grid-template-columns: 1fr 1fr"],
+    [style*="grid-template-columns: 2fr 1fr"],
+    [style*="grid-template-columns: 1fr 2fr"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Auto-fit grids with large min-width → force smaller minimum */
+    [style*="grid-template-columns: repeat(auto-fit, minmax(28"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    [style*="grid-template-columns: repeat(auto-fit, minmax(24"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    [style*="grid-template-columns: repeat(auto-fit, minmax(30"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Flex rows with wrapped content → column */
+    [style*="display: flex"][style*="justify-content: space-between"] {
+        flex-direction: column !important;
+        gap: 1rem !important;
+    }
+
+    /* Section padding reduction */
+    section[style*="padding: 6rem 0"] {
+        padding: 3rem 0 !important;
+    }
+
+    section[style*="padding: 5rem 0"] {
+        padding: 2.5rem 0 !important;
+    }
+
+    section[style*="padding: 4rem 0"] {
+        padding: 2rem 0 !important;
+    }
+
+    /* Careers job listing row → stacked */
+    [style*="display: flex"][style*="justify-content: space-between"][style*="align-items: center"] {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 1rem !important;
+    }
+
+    [style*="display: flex"][style*="justify-content: space-between"][style*="align-items: center"] .btn {
+        width: 100%;
+        text-align: center;
+    }
+
+    /* About / Team page image + text side-by-side → stack */
+    [style*="display: grid"][style*="grid-template-columns: 1fr 400px"],
+    [style*="display: grid"][style*="grid-template-columns: 400px 1fr"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Dashboard / admin panels */
+    .dashboard-grid,
+    .admin-layout {
+        grid-template-columns: 1fr !important;
+    }
+
+    .sidebar {
+        display: none;
+    }
+
+    /* Tables → horizontally scrollable */
+    .table-wrapper,
+    .shipments-table-wrap {
+        overflow-x: auto;
+    }
+
+    /* Modals */
+    .modal-content {
+        width: 95% !important;
+        max-width: 95% !important;
+        margin: 1rem auto !important;
+        padding: 1.25rem !important;
+    }
+
+    /* Buttons full-width where appropriate */
+    .hero-actions .btn,
+    .cta-actions .btn {
+        width: 100%;
+    }
+
+    /* Typography scale-down */
+    h1 {
+        font-size: clamp(1.6rem, 5vw, 2.5rem) !important;
+    }
+
+    h2 {
+        font-size: clamp(1.3rem, 4vw, 2rem) !important;
+    }
+}
+
+/* Slightly larger breakpoint for tablets */
+@media (max-width: 600px) {
+    .footer-grid {
+        gap: 1.5rem !important;
+    }
+
+    .hero {
+        padding-top: 5.5rem !important;
+    }
+
+    .nav-container {
+        padding: 0 1rem;
+    }
+}
