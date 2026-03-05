@@ -125,7 +125,7 @@ async function sendSMS(to, body) {
 
 // === Reusable Email Template Builder ===
 function buildEmailTemplate(headerTitle, headerSubtitle, bodyContent) {
-    const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+    const baseUrl = process.env.BASE_URL || 'https://www.swiftnavlog.com';
     return `
         <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
             <div style="background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
@@ -223,7 +223,7 @@ app.post('/api/auth/register', async (req, res) => {
             `);
 
             resend.emails.send({
-                from: process.env.EMAIL_FROM || 'SwiftNav Logistics <onboarding@resend.dev>',
+                from: process.env.EMAIL_FROM || 'SwiftNav Logistics <info@swiftnavlog.com>',
                 to: email,
                 subject: '🎉 Welcome to SwiftNav Logistics — Your Account is Ready!',
                 html: welcomeRegHtml
@@ -292,7 +292,7 @@ app.post('/api/auth/forgot-password', (req, res) => {
             `);
 
             resend.emails.send({
-                from: process.env.EMAIL_FROM || 'SwiftNav Logistics <onboarding@resend.dev>',
+                from: process.env.EMAIL_FROM || 'SwiftNav Logistics <info@swiftnavlog.com>',
                 to: email,
                 subject: '🔐 Password Reset Code - SwiftNav Logistics',
                 html: resetHtml
@@ -576,7 +576,7 @@ app.post('/api/admin/shipments', authenticate, isAdmin, (req, res) => {
                     `;
 
                     resend.emails.send({
-                        from: process.env.EMAIL_FROM || 'SwiftNav Logistics <onboarding@resend.dev>',
+                        from: process.env.EMAIL_FROM || 'SwiftNav Logistics <info@swiftnavlog.com>',
                         to: user_email,
                         subject: `Your Shipment ${trackingNumber} Has Been Created — SwiftNav Logistics`,
                         html: welcomeHtml
@@ -633,7 +633,7 @@ app.post('/api/admin/shipments', authenticate, isAdmin, (req, res) => {
                     `;
 
                     resend.emails.send({
-                        from: process.env.EMAIL_FROM || 'SwiftNav Logistics <onboarding@resend.dev>',
+                        from: process.env.EMAIL_FROM || 'SwiftNav Logistics <info@swiftnavlog.com>',
                         to: sender_email,
                         subject: `Shipment Confirmation: ${trackingNumber} — SwiftNav Logistics`,
                         html: senderHtml
@@ -796,7 +796,7 @@ app.post('/api/admin/shipments/:trackingNumber/events', authenticate, isAdmin, a
                             </div>
                         `);
                         const info = await resend.emails.send({
-                            from: process.env.EMAIL_FROM || 'SwiftNav Logistics <onboarding@resend.dev>',
+                            from: process.env.EMAIL_FROM || 'SwiftNav Logistics <info@swiftnavlog.com>',
                             to: shipmentInfo.user_email,
                             subject: `${statusIcon} Shipment Update: ${trackingNumber} — ${status_marker}`,
                             html: updateHtml
@@ -942,8 +942,8 @@ app.post('/api/contact', async (req, res) => {
 
     try {
         await resend.emails.send({
-            from: process.env.EMAIL_FROM || 'SwiftNav Logistics <onboarding@resend.dev>',
-            to: process.env.EMAIL_USER || 'admin@swiftnav.com',
+            from: process.env.EMAIL_FROM || 'SwiftNav Logistics <info@swiftnavlog.com>',
+            to: process.env.EMAIL_USER || 'info@swiftnavlog.com',
             replyTo: email,
             subject: `📬 New Contact Request from ${name}`,
             html: adminHtml
@@ -951,7 +951,7 @@ app.post('/api/contact', async (req, res) => {
 
         // Send confirmation to the customer
         await resend.emails.send({
-            from: process.env.EMAIL_FROM || 'SwiftNav Logistics <onboarding@resend.dev>',
+            from: process.env.EMAIL_FROM || 'SwiftNav Logistics <info@swiftnavlog.com>',
             to: email,
             subject: '✅ We received your message — SwiftNav Logistics',
             html: customerHtml

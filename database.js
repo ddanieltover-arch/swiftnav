@@ -196,21 +196,21 @@ const initializeDatabase = async () => {
 
         // Seed Admin (Awaited)
         await new Promise((resolve, reject) => {
-            db.get('SELECT * FROM Users WHERE email = ?', ['admin@swiftnav.com'], async (err, user) => {
+            db.get('SELECT * FROM Users WHERE email = ?', ['info@swiftnavlog.com'], async (err, user) => {
                 if (err) return reject(err);
                 if (!user) {
                     const hash = await bcrypt.hash('password123', 10);
                     db.run('INSERT INTO Users (name, email, password_hash, role) VALUES (?, ?, ?, ?)',
-                        ['System Admin', 'admin@swiftnav.com', hash, 'admin'], (err) => {
+                        ['System Admin', 'info@swiftnavlog.com', hash, 'admin'], (err) => {
                             if (err) reject(err);
                             else {
-                                console.log('✅ Admin account seeded: admin@swiftnav.com / password123');
+                                console.log('✅ Admin account seeded: info@swiftnavlog.com / password123');
                                 resolve();
                             }
                         });
                 } else {
                     if (user.role !== 'admin') {
-                        db.run('UPDATE Users SET role = ? WHERE email = ?', ['admin', 'admin@swiftnav.com'], (err) => {
+                        db.run('UPDATE Users SET role = ? WHERE email = ?', ['admin', 'info@swiftnavlog.com'], (err) => {
                             if (err) reject(err);
                             else resolve();
                         });
