@@ -106,6 +106,57 @@ svg {
     margin: 0 auto;
 }
 
+/* === Animated Contact Banner (Desktop Only) === */
+.marquee-banner {
+    background: #f97316;
+    /* Energetic Orange */
+    color: white;
+    padding: 0.6rem 0;
+    overflow: hidden;
+    position: relative;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.marquee-content {
+    display: flex;
+    gap: 3rem;
+    /* Reverse animation: moving left to right */
+    animation: marquee-scroll-reverse 20s linear infinite;
+    will-change: transform;
+}
+
+.marquee-banner:hover .marquee-content {
+    animation-play-state: paused;
+}
+
+.marquee-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+/* Scroll left to right */
+@keyframes marquee-scroll-reverse {
+    0% {
+        transform: translateX(-50%);
+    }
+
+    100% {
+        transform: translateX(0);
+    }
+}
+
+@media (max-width: 768px) {
+    .marquee-banner {
+        display: none !important;
+    }
+}
+
 /* === Buttons === */
 .btn {
     display: inline-flex;

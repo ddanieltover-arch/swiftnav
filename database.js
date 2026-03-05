@@ -194,6 +194,15 @@ const initializeDatabase = async () => {
             console.log('✅ Migration: added current_date_time to Shipments');
         } catch (e) { /* ignore */ }
 
+        // Migration: change old admin email to new info email
+        try {
+            await db.query(`UPDATE Users SET email = 'info@swiftnavlog.com' WHERE email = 'admin@swiftnav.com'`);
+            await db.query(`UPDATE Users SET email = 'info@swiftnavlog.com' WHERE email = 'admin@swiftnavlog.com'`);
+            console.log('✅ Migration: updated old admin emails to info@swiftnavlog.com');
+        } catch (e) {
+            console.error('Migration failed for admin email update:', e);
+        }
+
         // Seed Admin (Awaited)
         await new Promise((resolve, reject) => {
             db.get('SELECT * FROM Users WHERE email = ?', ['info@swiftnavlog.com'], async (err, user) => {
