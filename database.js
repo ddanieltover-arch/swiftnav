@@ -198,6 +198,8 @@ const initializeDatabase = async () => {
         try {
             await db.query(`UPDATE Users SET email = 'info@swiftnavlog.com' WHERE email = 'admin@swiftnav.com'`);
             await db.query(`UPDATE Users SET email = 'info@swiftnavlog.com' WHERE email = 'admin@swiftnavlog.com'`);
+            // Also delete any leftover rows with the old email to prevent duplicate logins
+            await db.query(`DELETE FROM Users WHERE email = 'admin@swiftnav.com'`);
             console.log('✅ Migration: updated old admin emails to info@swiftnavlog.com');
         } catch (e) {
             console.error('Migration failed for admin email update:', e);
