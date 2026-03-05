@@ -14,6 +14,9 @@
 </head>
 
 <body>
+
+    <!-- Page Transition Overlay injected by global.js -->
+
     <!-- Navigation -->
     <nav class="navbar">
         <div class="nav-container">
@@ -49,16 +52,22 @@
     </nav>
 
     <!-- Hero Section -->
-    <header class="hero">
+    <header class="hero" id="hero-section">
+        <div class="hero-particles" id="hero-particles"></div>
         <div class="container">
             <div class="hero-content reveal">
-                <h1>Logistics, Simplified.</h1>
+                <div class="hero-badge">🌍 Trusted Worldwide Freight Partner</div>
+                <h1>Logistics, <span class="hero-highlight">Simplified.</span></h1>
                 <p>Elevate your logistics game with SwiftNav Logistics, your trusted worldwide freight forwarder focused
-                    on
-                    speed, efficiency, and sustainability.</p>
+                    on speed, efficiency, and sustainability.</p>
                 <div class="hero-actions">
-                    <a href="#track" class="btn btn-primary btn-large">Track a Shipment</a>
-                    <a href="#services" class="btn btn-secondary btn-large">Our Services</a>
+                    <a href="#track" class="btn btn-primary btn-large">🚀 Track a Shipment</a>
+                    <a href="#services" class="btn btn-secondary btn-large">Our Services →</a>
+                </div>
+                <div class="hero-stats">
+                    <div class="hero-stat"><strong>10,000+</strong><span>Shipments Delivered</span></div>
+                    <div class="hero-stat"><strong>50+</strong><span>Countries Served</span></div>
+                    <div class="hero-stat"><strong>99.8%</strong><span>On-Time Rate</span></div>
                 </div>
             </div>
         </div>
@@ -71,10 +80,21 @@
                 <h2>Track Your Shipment</h2>
                 <form id="quick-track-form" class="track-form">
                     <div style="display: flex; flex-direction: column; gap: 1rem; width: 100%;">
-                        <input type="text" id="tracking-input" placeholder="Enter Tracking Number (e.g., SNXYZ123)"
-                            required>
-                        <input type="email" id="tracking-email" placeholder="Confirm Email Address" required>
-                        <button type="submit" class="btn btn-primary">Track & View Dashboard</button>
+                        <div style="position:relative;">
+                            <input type="text" id="tracking-input" placeholder="e.g., SNC66CE65F37" required
+                                autocomplete="off"
+                                style="padding-left:2.5rem; letter-spacing:0.05em; text-transform:uppercase;">
+                            <span
+                                style="position:absolute;left:0.85rem;top:50%;transform:translateY(-50%);font-size:1rem;pointer-events:none;">📦</span>
+                        </div>
+                        <div style="position:relative;">
+                            <input type="email" id="tracking-email" placeholder="receiver@email.com" required
+                                style="padding-left:2.5rem;">
+                            <span
+                                style="position:absolute;left:0.85rem;top:50%;transform:translateY(-50%);font-size:1rem;pointer-events:none;">✉️</span>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="track-submit-btn">🔍 Track &amp; View
+                            Dashboard</button>
                     </div>
                 </form>
             </div>
@@ -449,4 +469,42 @@
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="script.js"></script>
     <script src="performance.js"></script>
+    <script src="global.js"></script>
+    <script>
+        // #10 Tracking form auto-format & real-time validation
+        const trackInput = document.getElementById('tracking-input');
+        const trackEmail = document.getElementById('tracking-email');
+        if (trackInput) {
+            trackInput.addEventListener('input', function () {
+                const pos = this.selectionStart;
+                this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                this.setSelectionRange(pos, pos);
+                this.style.borderColor = this.value.length >= 5 ? '#22c55e' : '';
+            });
+        }
+        if (trackEmail) {
+            trackEmail.addEventListener('input', function () {
+                const valid = /^[^@]+@[^@]+\.[^@]+$/.test(this.value);
+                this.style.borderColor = this.value ? (valid ? '#22c55e' : '#ef4444') : '';
+            });
+        }
+
+        // #4 Hero animated particles
+        const particlesEl = document.getElementById('hero-particles');
+        if (particlesEl) {
+            for (let i = 0; i < 18; i++) {
+                const p = document.createElement('div');
+                const size = Math.random() * 6 + 3;
+                p.style.cssText = `
+                    position:absolute; border-radius:50%; pointer-events:none;
+                    width:${size}px; height:${size}px;
+                    background:rgba(249,115,22,${Math.random() * 0.3 + 0.1});
+                    left:${Math.random() * 100}%; top:${Math.random() * 100}%;
+                    animation: particleFloat ${Math.random() * 8 + 6}s ease-in-out infinite;
+                    animation-delay:${Math.random() * 4}s;
+                `;
+                particlesEl.appendChild(p);
+            }
+        }
+    </script>
 </body>

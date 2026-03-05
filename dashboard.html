@@ -90,6 +90,56 @@
         .hidden {
             display: none !important;
         }
+
+        @media (max-width: 768px) {
+            .dashboard-container {
+                padding: 6rem 1rem 2rem;
+            }
+
+            .dashboard-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1.5rem;
+            }
+
+            .dashboard-header .btn {
+                width: 100%;
+            }
+
+            .details-pane {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+                padding: 1.25rem;
+            }
+
+            .shipment-card {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .shipment-card>div:last-child {
+                text-align: left !important;
+                width: 100%;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                border-top: 1px solid var(--clr-border);
+                padding-top: 0.75rem;
+            }
+
+            #dashboard-map {
+                height: 300px;
+            }
+
+            .details-pane>div:first-child {
+                order: 2;
+            }
+
+            .details-pane>div:last-child {
+                order: 1;
+            }
+        }
     </style>
 </head>
 
@@ -231,6 +281,20 @@
 
                 // Get shipments
                 const listContainer = document.getElementById('shipment-list');
+                listContainer.innerHTML = Array(3).fill(0).map(() => `
+                    <div class="shipment-card" style="pointer-events: none; border-color: transparent;">
+                        <div style="flex-grow: 1;">
+                            <div class="skeleton" style="height: 24px; width: 150px; margin-bottom: 0.5rem;"></div>
+                            <div class="skeleton" style="height: 16px; width: 220px; margin-bottom: 0.5rem;"></div>
+                            <div class="skeleton" style="height: 12px; width: 100px;"></div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div class="skeleton" style="height: 24px; width: 80px; border-radius: 999px; margin-left: auto;"></div>
+                            <div class="skeleton" style="height: 16px; width: 120px; margin-top: 1rem; margin-left: auto;"></div>
+                        </div>
+                    </div>
+                `).join('');
+
                 const shipRes = await fetch('/api/user/shipments', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -312,7 +376,15 @@
 
             document.getElementById('detail-title').textContent = `Shipment: ${trackingNumber}`;
             const timeline = document.getElementById('dashboard-timeline');
-            timeline.innerHTML = '<p>Loading timeline...</p>';
+            timeline.innerHTML = Array(4).fill(0).map(() => `
+                <div style="margin-bottom: 1.5rem; display: flex; gap: 15px;">
+                    <div class="skeleton" style="width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; margin-top: 5px;"></div>
+                    <div style="flex-grow: 1;">
+                        <div class="skeleton" style="height: 16px; width: 140px; margin-bottom: 8px;"></div>
+                        <div class="skeleton" style="height: 14px; width: 200px;"></div>
+                    </div>
+                </div>
+            `).join('');
 
             // Initialize Map if not already
             if (!map) {
@@ -536,6 +608,7 @@
             }
         }
     </script>
+    <script src="global.js"></script>
 </body>
 
 </html>

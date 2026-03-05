@@ -245,9 +245,24 @@
             if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '🔍 Searching...'; }
 
             trackingDetailSection.classList.remove('hidden');
-            trackingNumberDisplay.textContent = `Authenticating...`;
-            timelineContainer.innerHTML = '<p style="text-align:center;">Securing connection...</p>';
-            document.getElementById('tracking-summary-box')?.classList.add('hidden');
+            trackingNumberDisplay.innerHTML = `<div class="skeleton" style="height: 28px; width: 220px; border-radius: 4px;"></div>`;
+            timelineContainer.innerHTML = Array(3).fill(0).map(() => `
+                <li style="display: flex; gap: 15px; margin-bottom: 20px;">
+                    <div class="skeleton" style="width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; margin-top: 5px;"></div>
+                    <div style="flex-grow: 1;">
+                        <div class="skeleton" style="height: 16px; width: 120px; margin-bottom: 8px; border-radius: 4px;"></div>
+                        <div class="skeleton" style="height: 14px; width: 180px; border-radius: 4px;"></div>
+                    </div>
+                </li>
+            `).join('');
+
+            const summaryBox = document.getElementById('tracking-summary-box');
+            if (summaryBox) {
+                summaryBox.classList.remove('hidden');
+                document.getElementById('track-receiver').innerHTML = `<div class="skeleton" style="height: 16px; width: 140px; display: inline-block; vertical-align: middle; border-radius: 4px;"></div>`;
+                document.getElementById('track-origin').innerHTML = `<div class="skeleton" style="height: 16px; width: 100px; display: inline-block; vertical-align: middle; border-radius: 4px;"></div>`;
+                document.getElementById('track-destination').innerHTML = `<div class="skeleton" style="height: 16px; width: 100px; display: inline-block; vertical-align: middle; border-radius: 4px;"></div>`;
+            }
 
             try {
                 const res = await fetch(`/api/track`, {
@@ -265,13 +280,15 @@
                     trackingDetailSection.classList.remove('hidden');
                     trackingDetailSection.scrollIntoView({ behavior: 'smooth' });
                     trackingNumberDisplay.textContent = 'Not Found';
-                    timelineContainer.innerHTML = `<p style="text-align:center; color:#ef4444;">${data.message || 'Please check the tracking number and email.'}</p>`;
-                    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Track Shipment'; }
+                    timelineContainer.innerHTML = `<p style="text-align:center; color:#ef4444; padding: 2rem;">${data.message || 'Please check the tracking number and email.'}</p>`;
+                    if (summaryBox) summaryBox.classList.add('hidden');
+                    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '🔍 Track & View Dashboard'; }
                 }
             } catch (err) {
                 trackingNumberDisplay.textContent = 'Error Fetching Data';
-                timelineContainer.innerHTML = `<p style="text-align:center; color:#ef4444;">Could not connect to tracking server.</p>`;
-                if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Track Shipment'; }
+                timelineContainer.innerHTML = `<p style="text-align:center; color:#ef4444; padding: 2rem;">Could not connect to tracking server. Please try again later.</p>`;
+                if (summaryBox) summaryBox.classList.add('hidden');
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '🔍 Track & View Dashboard'; }
             }
         }
     });
