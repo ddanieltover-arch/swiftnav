@@ -866,21 +866,7 @@
             <div class="orders-header">
                 <h3>Incoming Orders</h3>
             </div>
-
-            <div class="search-container">
-                <span class="search-icon">🔍</span>
-                <input type="text" id="admin-search" placeholder="Search tracking, receiver, or destination...">
-            </div>
-
-            <div class="filter-tabs" id="admin-filter-tabs">
-                <div class="filter-tab active" data-filter="all">All</div>
-                <div class="filter-tab" data-filter="Pending">Pending</div>
-                <div class="filter-tab" data-filter="In Transit">In Transit</div>
-                <div class="filter-tab" data-filter="On Hold">On Hold</div>
-                <div class="filter-tab" data-filter="Delivered">Delivered</div>
-            </div>
-
-            <div style="overflow-x: auto;" class="card-view-on-mobile">
+            <div style="overflow-x: auto;">
                 <table class="orders-table">
                     <thead>
                         <tr>
@@ -1186,39 +1172,36 @@
         </div>
     </div>
 
-    <!-- Custom Confirm Modal -->
-    <div id="confirm-modal" class="modal hidden" style="z-index: 9999;">
-        <div class="modal-content" style="max-width: 400px; text-align: center;">
-            <div style="font-size: 3rem; margin-bottom: 1rem;">⚠️</div>
-            <h2 style="margin-bottom: 1rem; color: #0f172a;">Confirm Action</h2>
-            <p id="confirm-msg" style="color: #475569; margin-bottom: 2rem; line-height: 1.5; font-size: 0.95rem;"></p>
-            <div style="display: flex; gap: 1rem; justify-content: center;">
-                <button id="confirm-cancel" class="btn-outline" style="min-width: 100px; padding: 10px;">Cancel</button>
-                <button id="confirm-ok" class="btn-filled"
-                    style="min-width: 100px; padding: 10px; background: #ef4444;">Delete</button>
-            </div>
-        </div>
-    </div>
-
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             const token = localStorage.getItem('swiftnav_token');
             const role = localStorage.getItem('swiftnav_role');
             if (!token || role !== 'admin') { window.location.href = 'index.html'; return; }
 
-            const fetchHeaders = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
-            let allShipments = [];
-            let filteredShipments = [];
-            let currentFilter = 'all';
-            let searchQuery = '';
-            let currentPage = 1;
-            const itemsPerPage = 8;
-
             document.getElementById('logout-btn').addEventListener('click', () => { localStorage.clear(); window.location.href = 'index.html'; });
+
+            // Mobile hamburger toggle for admin nav
+            const adminHamburger = document.getElementById('admin-hamburger');
+            const adminNavTabs = document.querySelector('.nav-tabs');
+            if (adminHamburger && adminNavTabs) {
+                adminHamburger.addEventListener('click', () => {
+                    adminNavTabs.classList.toggle('mobile-open');
+                    adminHamburger.textContent = adminNavTabs.classList.contains('mobile-open') ? '✕' : '☰';
+                });
+                adminNavTabs.querySelectorAll('a').forEach(link => {
+                    link.addEventListener('click', () => {
+                        adminNavTabs.classList.remove('mobile-open');
+                        adminHamburger.textContent = '☰';
+                    });
+                });
+            }
+
+            const fetchHeaders = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
 
             // Time-aware greeting
             const hour = new Date().getHours();
-            document.getElementById('greeting-msg').textContent = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
+            const greetText = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
+            document.getElementById('greeting-msg').textContent = greetText;
 
             // Toggle Create Shipment
             document.getElementById('toggle-create-btn').addEventListener('click', () => {
@@ -1228,415 +1211,330 @@
             });
 
             // Tab navigation
-            document.getElementById('tab-dashboard').addEventListener('click', (e) => e.preventDefault());
+            document.getElementById('tab-dashboard').addEventListener('click', (e) => { e.preventDefault(); });
             document.getElementById('tab-shipments').addEventListener('click', (e) => { e.preventDefault(); document.getElementById('card-total').click(); });
             document.getElementById('tab-users').addEventListener('click', (e) => { e.preventDefault(); document.getElementById('card-users').click(); });
 
-            async function animateValue(id, end, duration = 1000) {
-                const obj = document.getElementById(id);
-                if (!obj) return;
-                const start = parseInt(obj.textContent.replace(/,/g, '')) || 0;
-                if (start === end) return;
-                const range = end - start;
-                let startTime = null;
-                const step = (timestamp) => {
-                    if (!startTime) startTime = timestamp;
-                    const progress = Math.min((timestamp - startTime) / duration, 1);
-                    obj.textContent = Math.floor(progress * range + start).toLocaleString();
-                    if (progress < 1) window.requestAnimationFrame(step);
-                };
-                window.requestAnimationFrame(step);
-            }
+            // Dummy stat card for users (hidden, but needed for click handler)
+            const cardUsers = document.createElement('div');
+            cardUsers.id = 'card-users';
+            cardUsers.style.display = 'none';
+            document.body.appendChild(cardUsers);
 
-            function setSkeletons(active) {
-                const ids = ['stat-total', 'stat-active', 'stat-pending', 'stat-delivered'];
-                ids.forEach(id => {
-                    const el = document.getElementById(id);
-                    if (active) el.innerHTML = '<div class="skeleton" style="height:30px; width:60px; margin:0 auto;"></div>';
-                });
-                if (active) document.getElementById('orders-table-body').innerHTML = Array(5).fill(0).map(() => `<tr>${Array(8).fill('<td><div class="skeleton" style="height:20px; width:100%;"></div></td>').join('')}</tr>`).join('');
-            }
+            let shipmentChart = null;
 
-            async function loadDashboard(isRefresh = false) {
-                if (!isRefresh) setSkeletons(true);
+            async function loadDashboard() {
                 try {
-                    const [statRes, shipRes] = await Promise.all([
-                        fetch('/api/admin/stats', { headers: fetchHeaders }),
-                        fetch('/api/admin/shipments', { headers: fetchHeaders })
-                    ]);
+                    const statRes = await fetch('/api/admin/stats', { headers: fetchHeaders });
                     const stats = await statRes.json();
-                    allShipments = (await shipRes.json()).filter(s => s.is_deleted !== 1);
+                    document.getElementById('stat-total').textContent = stats.totalShipments.toLocaleString();
+                    document.getElementById('stat-active').textContent = stats.activeShipments.toLocaleString();
+                    if (document.getElementById('stat-users')) document.getElementById('stat-users').textContent = stats.totalUsers || '0';
 
-                    animateValue('stat-total', stats.totalShipments);
-                    animateValue('stat-active', stats.activeShipments);
-                    const pending = allShipments.filter(s => s.status === 'Pending').length;
-                    const delivered = allShipments.filter(s => s.status === 'Delivered').length;
-                    animateValue('stat-pending', pending);
-                    animateValue('stat-delivered', delivered);
+                    const shipRes = await fetch('/api/admin/shipments', { headers: fetchHeaders });
+                    const shipments = await shipRes.json();
+                    window.allShipments = shipments;
 
-                    applyFilters();
-                    updateChart(allShipments);
-                    updateLiveTracking(allShipments);
-                } catch (err) { console.error("Dashboard error", err); }
-            }
+                    // Calculate pending & delivered
+                    const pending = shipments.filter(s => s.status === 'Pending' && s.is_deleted !== 1).length;
+                    const delivered = shipments.filter(s => s.status === 'Delivered' && s.is_deleted !== 1).length;
+                    document.getElementById('stat-pending').textContent = pending.toLocaleString();
+                    document.getElementById('stat-delivered').textContent = delivered.toLocaleString();
 
-            function applyFilters() {
-                filteredShipments = allShipments.filter(s => {
-                    const matchesFilter = currentFilter === 'all' || s.status === currentFilter;
-                    const matchesSearch = !searchQuery ||
-                        s.tracking_number.toLowerCase().includes(searchQuery) ||
-                        (s.receiver_name || '').toLowerCase().includes(searchQuery) ||
-                        (s.receiver_address || '').toLowerCase().includes(searchQuery);
-                    return matchesFilter && matchesSearch;
-                });
-                currentPage = 1;
-                renderTable();
-            }
+                    // Populate orders table
+                    populateOrdersTable(shipments);
 
-            function renderTable() {
-                const tbody = document.getElementById('orders-table-body');
-                const start = (currentPage - 1) * itemsPerPage;
-                const paginated = filteredShipments.slice(start, start + itemsPerPage);
+                    // Update chart
+                    updateChart(shipments);
 
-                if (paginated.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:3rem; color:#94a3b8;">No shipments found matching your criteria.</td></tr>`;
-                    updatePagination(0);
-                    return;
-                }
-
-                tbody.innerHTML = paginated.map(s => `
-                    <tr>
-                        <td data-label="Tracking"><strong style="color:var(--clr-secondary); cursor:pointer;" onclick="navigator.clipboard.writeText('${s.tracking_number}').then(() => showToast('Tracking number copied!'))">${s.tracking_number}</strong></td>
-                        <td data-label="Status">
-                            <select class="status-badge ${getStatusBadgeClass(s.status)}" onchange="quickUpdateStatus('${s.tracking_number}', this.value)" style="border:none; cursor:pointer; font-family:inherit;">
-                                ${['Pick up', 'In Transit', 'On Hold', 'Customs Clearance', 'Out for Delivery', 'Delivered', 'Exception/Delayed'].map(opt => `<option value="${opt}" ${s.status === opt ? 'selected' : ''}>${opt}</option>`).join('')}
-                            </select>
-                        </td>
-                        <td data-label="Receiver">${s.receiver_name || 'N/A'}</td>
-                        <td data-label="Carrier">${s.carrier || 'N/A'}</td>
-                        <td data-label="Origin" style="max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${s.sender_address}">${s.sender_address || 'N/A'}</td>
-                        <td data-label="Destination" style="max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${s.receiver_address}">${s.receiver_address || 'N/A'}</td>
-                        <td data-label="Date">${new Date(s.created_at).toLocaleDateString()}</td>
-                        <td data-label="Actions">
-                            <div style="display:flex; gap:6px; justify-content:flex-end;">
-                                <button class="action-icon-btn" onclick="openUpdateModal('${s.tracking_number}')" title="Trace">📍</button>
-                                <button class="action-icon-btn" onclick="openEditModal('${escapeHTML(JSON.stringify(s))}')" title="Edit">✏️</button>
-                                <button class="action-icon-btn danger" onclick="deleteShipment('${s.tracking_number}')" title="Delete">🗑️</button>
-                            </div>
-                        </td>
-                    </tr>
-                `).join('');
-
-                updatePagination(filteredShipments.length);
+                    // Update live tracking
+                    updateLiveTracking(shipments);
+                } catch (err) { console.error("Failed to load admin dashboard", err); }
             }
 
             function getStatusBadgeClass(status) {
                 if (status === 'Delivered') return 'status-delivered';
-                if (['In Transit', 'Out for Delivery'].includes(status)) return 'status-transit';
-                if (['On Hold', 'Exception/Delayed'].includes(status)) return 'status-hold';
+                if (status === 'In Transit' || status === 'Out for Delivery') return 'status-transit';
+                if (status === 'On Hold' || status === 'Exception/Delayed') return 'status-hold';
                 return 'status-pending';
             }
 
-            function updatePagination(total) {
-                const totalPages = Math.ceil(total / itemsPerPage) || 1;
-                document.getElementById('total-pages').textContent = totalPages;
-                document.getElementById('current-page').textContent = currentPage;
-                document.getElementById('prev-page').disabled = currentPage === 1;
-                document.getElementById('next-page').disabled = currentPage === totalPages;
+            function populateOrdersTable(shipments) {
+                const tbody = document.getElementById('orders-table-body');
+                const active = shipments.filter(s => s.is_deleted !== 1).slice(0, 10);
+                if (active.length === 0) { tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#94a3b8; padding:2rem;">No shipments found.</td></tr>'; return; }
+                tbody.innerHTML = active.map(s => `
+                <tr>
+                    <td><strong style="color:#1e3a8a;">${s.tracking_number}</strong></td>
+                    <td><span class="status-badge ${getStatusBadgeClass(s.status)}">${s.status}</span></td>
+                    <td>${s.receiver_name || 'N/A'}</td>
+                    <td>${s.carrier || 'N/A'}</td>
+                    <td style="max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${s.sender_address || 'N/A'}</td>
+                    <td style="max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${s.receiver_address || 'N/A'}</td>
+                    <td>${s.created_at ? new Date(s.created_at).toLocaleDateString() : 'N/A'}</td>
+                    <td>
+                        <div style="display:flex; gap:4px;">
+                            <button class="action-icon-btn" onclick="openUpdateModal('${s.tracking_number}')" title="Add Event">📍</button>
+                            <button class="action-icon-btn" onclick="openEditModal('${escapeHTML(JSON.stringify(s))}')" title="Edit">✏️</button>
+                            <button class="action-icon-btn danger" onclick="deleteShipment('${s.tracking_number}')" title="Delete">🗑️</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
             }
 
-            // UI Events
-            document.getElementById('admin-search').addEventListener('input', (e) => {
-                searchQuery = e.target.value.toLowerCase();
-                applyFilters();
-            });
-
-            document.getElementById('admin-filter-tabs').addEventListener('click', (e) => {
-                const tab = e.target.closest('.filter-tab');
-                if (!tab) return;
-                document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                currentFilter = tab.dataset.filter;
-                applyFilters();
-            });
-
-            document.getElementById('prev-page').addEventListener('click', () => { if (currentPage > 1) { currentPage--; renderTable(); } });
-            document.getElementById('next-page').addEventListener('click', () => { if (currentPage * itemsPerPage < filteredShipments.length) { currentPage++; renderTable(); } });
-
-            window.quickUpdateStatus = async (trackingNum, newStatus) => {
-                try {
-                    const res = await fetch(`/api/admin/shipments/${trackingNum}/events`, {
-                        method: 'POST',
-                        headers: fetchHeaders,
-                        body: JSON.stringify({ status_marker: newStatus, location: 'Auto-Update', description: `Status changed to ${newStatus} via dashboard.`, current_date_time: new Date().toISOString() })
-                    });
-                    if (res.ok) { showToast(`Saved: ${trackingNum} is now ${newStatus}`); loadDashboard(true); }
-                    else showToast('Error updating status', 'error');
-                } catch { showToast('Connection error', 'error'); }
-            };
-
-            window.deleteShipment = async (trackingNum) => {
-                const confirmed = await confirmCustom(`Are you sure you want to delete shipment <strong>${trackingNum}</strong>?<br><br>This action cannot be undone.`);
-                if (!confirmed) return;
-                try {
-                    const res = await fetch(`/api/admin/shipments/${trackingNum}`, { method: 'DELETE', headers: fetchHeaders });
-                    if (res.ok) { showToast('Shipment deleted permanently'); loadDashboard(true); }
-                    else showToast('Failed to delete', 'error');
-                } catch { showToast('Connection error', 'error'); }
-            };
-
-            // Custom Confirm Helper
-            function confirmCustom(msg) {
-                return new Promise(resolve => {
-                    const modal = document.getElementById('confirm-modal');
-                    document.getElementById('confirm-msg').innerHTML = msg;
-                    modal.classList.remove('hidden');
-
-                    const btnOk = document.getElementById('confirm-ok');
-                    const btnCancel = document.getElementById('confirm-cancel');
-
-                    const cleanup = () => {
-                        btnOk.removeEventListener('click', onOk);
-                        btnCancel.removeEventListener('click', onCancel);
-                        modal.classList.add('hidden');
-                    };
-
-                    const onOk = () => { cleanup(); resolve(true); };
-                    const onCancel = () => { cleanup(); resolve(false); };
-
-                    btnOk.addEventListener('click', onOk);
-                    btnCancel.addEventListener('click', onCancel);
-                });
-            }
-
-            // Auto-refresh every 60s
-            setInterval(() => loadDashboard(true), 60000);
-
-            // Chart & Tracking (adapted)
-            let shipmentChart = null;
             function updateChart(shipments) {
-                const active = shipments;
-                const last14 = {};
-                for (let i = 13; i >= 0; i--) {
+                const active = shipments.filter(s => s.is_deleted !== 1);
+                const last30 = {};
+                for (let i = 29; i >= 0; i--) {
                     const d = new Date(); d.setDate(d.getDate() - i);
                     const key = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                    last14[key] = 0;
+                    last30[key] = 0;
                 }
                 active.forEach(s => {
                     if (s.created_at) {
                         const key = new Date(s.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                        if (last14[key] !== undefined) last14[key]++;
+                        if (last30[key] !== undefined) last30[key]++;
                     }
                 });
-                const labels = Object.keys(last14);
-                const data = Object.values(last14);
+                const labels = Object.keys(last30);
+                const data = Object.values(last30);
 
                 if (shipmentChart) shipmentChart.destroy();
                 const ctx = document.getElementById('shipmentChart').getContext('2d');
+                const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+                gradient.addColorStop(0, 'rgba(30,58,138,0.25)');
+                gradient.addColorStop(1, 'rgba(30,58,138,0.02)');
+
                 shipmentChart = new Chart(ctx, {
                     type: 'line',
-                    data: { labels, datasets: [{ label: 'Shipments', data, borderColor: '#1e3a8a', backgroundColor: 'rgba(30,58,138,0.1)', fill: true, tension: 0.4 }] },
-                    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+                    data: { labels, datasets: [{ label: 'Shipments', data, backgroundColor: gradient, borderColor: '#1e3a8a', borderWidth: 2.5, fill: true, tension: 0.4, pointRadius: 0, pointHoverRadius: 6, pointHoverBackgroundColor: '#1e3a8a' }] },
+                    options: { responsive: true, plugins: { legend: { display: false }, tooltip: { backgroundColor: '#0f172a', titleFont: { size: 12 }, bodyFont: { size: 13 }, padding: 10, cornerRadius: 8 } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#94a3b8' } }, y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 11 }, color: '#94a3b8' }, beginAtZero: true } } }
                 });
             }
 
             function updateLiveTracking(shipments) {
-                const latest = shipments[0];
+                const active = shipments.filter(s => s.is_deleted !== 1 && s.status !== 'Delivered');
+                const latest = active.length > 0 ? active[0] : shipments[0];
                 if (!latest) return;
+
                 document.getElementById('live-tracking-num').textContent = latest.tracking_number;
+
+                // Fetch events for this shipment
                 fetch(`/api/track/${latest.tracking_number}`).then(r => r.json()).then(data => {
                     const timeline = document.getElementById('live-timeline');
-                    timeline.innerHTML = (data.events || []).slice(-4).map((ev, i, arr) => `
-                        <li>
-                            <div class="track-dot ${i === arr.length - 1 ? 'active' : ''}"></div>
-                            <div class="track-info">
-                                <div class="track-label">${ev.status_marker}</div>
-                                <div class="track-time">${new Date(ev.current_date_time).toLocaleString()}</div>
-                            </div>
-                        </li>
-                    `).join('');
-                });
+                    const events = (data.events || []).slice(-4);
+                    timeline.innerHTML = events.map((ev, i) => `
+                    <li>
+                        <div class="track-dot ${i === events.length - 1 ? 'active' : ''}"></div>
+                        <div class="track-info">
+                            <div class="track-label">${ev.status_marker}</div>
+                            <div class="track-time">${ev.location || ''} ${ev.current_date_time ? '• ' + new Date(ev.current_date_time).toLocaleString() : ''}</div>
+                        </div>
+                    </li>
+                `).join('');
+                }).catch(() => { });
+
+                document.getElementById('track-order-btn').onclick = () => { window.open(`/dashboard.html`, '_blank'); };
             }
 
-            window.openUpdateModal = (trackingNum) => { document.getElementById('us-tracking').value = trackingNum; document.getElementById('update-tracking-display').textContent = trackingNum; document.getElementById('update-modal').classList.remove('hidden'); };
-            window.openEditModal = (shipDataString) => {
-                const ship = JSON.parse(shipDataString);
-                document.getElementById('es-tracking').value = ship.tracking_number; document.getElementById('edit-tracking-display').textContent = ship.tracking_number;
-                ['type', 'carrier', 'sender-name', 'sender-phone', 'sender-email', 'sender-address', 'name', 'receiver-phone', 'address', 'current-date', 'departure-date', 'delivery-date', 'weight', 'dimensions', 'desc'].forEach(key => {
-                    const el = document.getElementById('es-' + key);
-                    if (el) el.value = ship[key.replace('-', '_')] || '';
-                });
-                document.getElementById('edit-modal').classList.remove('hidden');
-            };
+            // CSV Export
+            document.getElementById('export-csv-btn').addEventListener('click', () => {
+                if (!window.allShipments || window.allShipments.length === 0) { alert('No data to export.'); return; }
+                const headers = ['Tracking Number', 'Status', 'Receiver', 'Carrier', 'Origin', 'Destination', 'Created'];
+                const rows = window.allShipments.filter(s => s.is_deleted !== 1).map(s => [s.tracking_number, s.status, s.receiver_name, s.carrier, s.sender_address, s.receiver_address, s.created_at]);
+                let csv = headers.join(',') + '\n' + rows.map(r => r.map(v => `"${(v || '').toString().replace(/"/g, '""')}"`).join(',')).join('\n');
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `swiftnav_shipments_${new Date().toISOString().split('T')[0]}.csv`; a.click();
+            });
 
-            // Initial Load
             loadDashboard();
 
-            // Re-export logic
-            document.getElementById('export-csv-btn').onclick = () => {
-                const csv = "Tracking,Status,Receiver,Date\n" + allShipments.map(s => `${s.tracking_number},${s.status},${s.receiver_name},${s.created_at}`).join('\n');
-                const blob = new Blob([csv], { type: 'text/csv' });
-                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'shipments.csv'; a.click();
-            };
-
-            function escapeHTML(str) { return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)); }
-
-            // Forms Handlers
-            const createForm = document.getElementById('create-shipment-form');
-            if (createForm) {
-                createForm.addEventListener('submit', async (e) => {
-                    e.preventDefault();
-                    const btn = e.target.querySelector('button');
-                    btn.textContent = 'Processing...';
-
-                    const mappedBody = {
-                        shipment_type: document.getElementById('cs-type').value, carrier: document.getElementById('cs-carrier').value,
-                        user_email: document.getElementById('cs-email').value, sender_name: document.getElementById('cs-sender-name').value,
-                        sender_phone: document.getElementById('cs-sender-phone').value, sender_email: document.getElementById('cs-sender-email').value,
-                        sender_address: document.getElementById('cs-sender-address').value, receiver_name: document.getElementById('cs-name').value,
-                        receiver_phone: document.getElementById('cs-receiver-phone').value, receiver_address: document.getElementById('cs-address').value,
-                        weight: parseFloat(document.getElementById('cs-weight').value || 0), dimensions: document.getElementById('cs-dimensions').value,
-                        current_date_time: document.getElementById('cs-current-date').value, departure_date_time: document.getElementById('cs-departure-date').value,
-                        delivery_date_time: document.getElementById('cs-delivery-date').value, description: document.getElementById('cs-desc').value
-                    };
-                    try {
-                        const res = await fetch('/api/admin/shipments', { method: 'POST', headers: fetchHeaders, body: JSON.stringify(mappedBody) });
-                        if (res.ok) {
-                            if (window.showToast) window.showToast('Shipment created successfully!');
-                            e.target.reset();
-                            document.getElementById('create').classList.remove('visible');
-                            loadDashboard(true);
-                        } else if (window.showToast) window.showToast('Error creating shipment', 'error');
-                    } catch { if (window.showToast) window.showToast('Connection failed', 'error'); }
-                    btn.innerHTML = '🚀 Create Secure Shipment';
-                });
+            // === All Modal Logic (preserved) ===
+            function buildModalTableRows(ships) {
+                if (!ships || ships.length === 0) return '<tr><td colspan="5">No shipments found.</td></tr>';
+                return ships.map(ship => {
+                    let statusStyle = 'background:#f1f5f9; color:#334155;';
+                    let statusLabel = ship.status;
+                    let actionsHtml = `<div style="display:flex; gap:0.5rem;"><button class="action-btn" onclick="openUpdateModal('${ship.tracking_number}')">Add Event</button><button class="action-btn" onclick="openEditModal('${escapeHTML(JSON.stringify(ship))}')">Edit</button><button class="action-btn" style="background:#fee2e2; color:#b91c1c;" onclick="deleteShipment('${ship.tracking_number}')">Delete</button></div>`;
+                    if (ship.is_deleted === 1) { statusStyle = 'background:#fee2e2; color:#b91c1c;'; statusLabel = 'Deleted'; actionsHtml = '<span style="color:#94a3b8; font-style:italic;">N/A</span>'; }
+                    else if (ship.status === 'Delivered') { statusStyle = 'background:#dcfce7; color:#15803d;'; }
+                    return `<tr><td><strong>${ship.tracking_number}</strong></td><td>${ship.receiver_name}</td><td><span style="padding:4px 8px; border-radius:4px; font-size:0.875rem; font-weight:600; ${statusStyle}">${statusLabel}</span></td><td>${new Date(ship.created_at).toLocaleDateString()}</td><td>${actionsHtml}</td></tr>`;
+                }).join('');
             }
 
-            const updateStatusForm = document.getElementById('update-status-form');
-            if (updateStatusForm) {
-                updateStatusForm.addEventListener('submit', async (e) => {
-                    e.preventDefault();
-                    const btn = e.target.querySelector('button'); btn.textContent = 'Updating...';
-                    const trackingNum = document.getElementById('us-tracking').value;
-                    const body = {
-                        status_marker: document.getElementById('us-status').value,
-                        location: document.getElementById('us-location').value,
-                        description: document.getElementById('us-desc').value,
-                        current_date_time: document.getElementById('us-date').value
-                    };
-                    try {
-                        const res = await fetch(`/api/admin/shipments/${trackingNum}/events`, { method: 'POST', headers: fetchHeaders, body: JSON.stringify(body) });
-                        if (res.ok) {
-                            if (window.showToast) window.showToast('Tracking event added');
-                            document.getElementById('update-modal').classList.add('hidden');
-                            e.target.reset();
-                            loadDashboard(true);
-                        } else if (window.showToast) window.showToast('Failed to add event', 'error');
-                    } catch { if (window.showToast) window.showToast('Connection error', 'error'); }
-                    btn.innerHTML = '📧 Post Update &amp; Send Notification';
-                });
-            }
+            const totalModal = document.getElementById('total-modal');
+            document.getElementById('close-total-modal').addEventListener('click', () => { totalModal.classList.add('hidden'); });
+            const activeModal = document.getElementById('active-modal');
+            document.getElementById('close-active-modal').addEventListener('click', () => { activeModal.classList.add('hidden'); });
 
-            const editShipmentForm = document.getElementById('edit-shipment-form');
-            if (editShipmentForm) {
-                editShipmentForm.addEventListener('submit', async (e) => {
-                    e.preventDefault();
-                    const btn = e.target.querySelector('button'); btn.textContent = 'Saving...';
-                    const trackingNum = document.getElementById('es-tracking').value;
-                    const body = {
-                        shipment_type: document.getElementById('es-type').value, carrier: document.getElementById('es-carrier').value,
-                        sender_name: document.getElementById('es-sender-name').value, sender_phone: document.getElementById('es-sender-phone').value,
-                        sender_email: document.getElementById('es-sender-email').value, sender_address: document.getElementById('es-sender-address').value,
-                        receiver_name: document.getElementById('es-name').value, receiver_phone: document.getElementById('es-receiver-phone').value,
-                        receiver_address: document.getElementById('es-address').value, weight: parseFloat(document.getElementById('es-weight').value || 0),
-                        dimensions: document.getElementById('es-dimensions').value, current_date_time: document.getElementById('es-current-date').value,
-                        departure_date_time: document.getElementById('es-departure-date').value, delivery_date_time: document.getElementById('es-delivery-date').value,
-                        description: document.getElementById('es-desc').value
-                    };
-                    try {
-                        const res = await fetch(`/api/admin/shipments/${trackingNum}`, { method: 'PUT', headers: fetchHeaders, body: JSON.stringify(body) });
-                        if (res.ok) {
-                            if (window.showToast) window.showToast('Shipment updated');
-                            document.getElementById('edit-modal').classList.add('hidden');
-                            loadDashboard(true);
-                        } else if (window.showToast) window.showToast('Update failed', 'error');
-                    } catch { if (window.showToast) window.showToast('Connection error', 'error'); }
-                    btn.innerHTML = '💾 Save Changes';
-                });
-            }
+            document.getElementById('card-total').addEventListener('click', () => {
+                document.getElementById('total-table-body').innerHTML = buildModalTableRows(window.allShipments);
+                totalModal.classList.remove('hidden');
+            });
 
-            // User Management
-            async function openUsersModal() {
+            document.getElementById('card-active').addEventListener('click', () => {
+                const activeShipments = (window.allShipments || []).filter(ship => ship.status !== 'Delivered' && ship.is_deleted !== 1);
+                document.getElementById('active-table-body').innerHTML = buildModalTableRows(activeShipments);
+                activeModal.classList.remove('hidden');
+            });
+
+            const usersModal = document.getElementById('users-modal');
+            document.getElementById('close-users-modal').addEventListener('click', () => { usersModal.classList.add('hidden'); });
+            const editUserModal = document.getElementById('edit-user-modal');
+            document.getElementById('close-edit-user-modal').addEventListener('click', () => { editUserModal.classList.add('hidden'); });
+
+            // Pending shipments stat card
+            document.getElementById('card-pending').addEventListener('click', () => {
+                const pendingShipments = (window.allShipments || []).filter(ship => ship.status === 'Pending' && ship.is_deleted !== 1);
+                document.getElementById('total-table-body').innerHTML = buildModalTableRows(pendingShipments);
+                document.querySelector('#total-modal .modal-header h2').textContent = '⏳ Pending Shipments';
+                totalModal.classList.remove('hidden');
+            });
+            // Reset total modal title when it closes
+            document.getElementById('close-total-modal').addEventListener('click', () => { totalModal.classList.add('hidden'); document.querySelector('#total-modal .modal-header h2').textContent = '📊 Total Shipments'; }, { capture: false });
+
+            // Delivered shipments stat card
+            document.getElementById('card-delivered').addEventListener('click', () => {
+                const deliveredShipments = (window.allShipments || []).filter(ship => ship.status === 'Delivered' && ship.is_deleted !== 1);
+                document.getElementById('active-table-body').innerHTML = buildModalTableRows(deliveredShipments);
+                document.querySelector('#active-modal .modal-header h2').textContent = '✅ Delivered Shipments';
+                activeModal.classList.remove('hidden');
+            });
+            // Reset active modal title when it closes
+            const existingCloseActive = document.getElementById('close-active-modal');
+            existingCloseActive.replaceWith(existingCloseActive.cloneNode(true));
+            document.getElementById('close-active-modal').addEventListener('click', () => { activeModal.classList.add('hidden'); document.querySelector('#active-modal .modal-header h2').textContent = '🚚 Active Shipments'; });
+
+            // Notification bell button
+            document.querySelector('.notif-btn').addEventListener('click', () => {
+                const unread = (window.allShipments || []).filter(s => s.status === 'Pending' && s.is_deleted !== 1).length;
+                alert(`🔔 Notifications\n\nYou have ${unread} pending shipment${unread !== 1 ? 's' : ''} that need attention.\n\nGo to the Pending Packages card to see them.`);
+            });
+
+            document.getElementById('card-users').addEventListener('click', async () => {
                 try {
                     const res = await fetch('/api/admin/users', { headers: fetchHeaders });
                     if (res.ok) {
                         const users = await res.json();
                         const tbody = document.getElementById('users-table-body');
-                        tbody.innerHTML = users.map(u => `
-                            <tr>
-                                <td><strong>#${u.id}</strong></td>
-                                <td>${escapeHTML(u.email)}</td>
-                                <td><span style="padding:4px 8px; background:var(--clr-bg-alt); border-radius:4px;">${u.is_auto ? 'Auto-Created' : 'Registered'}</span></td>
-                                <td>${new Date(u.created_at).toLocaleDateString()}</td>
-                                <td>
-                                    <div style="display:flex; gap:6px;">
-                                        <button class="action-btn" onclick="openEditUserModal('${escapeHTML(JSON.stringify(u))}')">Edit</button>
-                                        <button class="action-btn danger" onclick="deleteUser('${u.id}')">Delete</button>
-                                    </div>
-                                </td>
-                            </tr>
-                        `).join('');
-                        document.getElementById('users-modal').classList.remove('hidden');
+                        tbody.innerHTML = '';
+                        users.forEach(u => {
+                            const type = u.is_auto ? 'Auto-Created' : 'Registered';
+                            const formattedDate = new Date(u.created_at).toLocaleString();
+                            tbody.innerHTML += `<tr><td><strong>${u.id}</strong></td><td>${escapeHTML(u.email)}</td><td><span style="padding:4px 8px; background:#f1f5f9; border-radius:4px; font-size:0.875rem;">${type}</span></td><td>${formattedDate}</td><td><div style="display:flex; gap:0.5rem;"><button class="action-btn" onclick="openEditUserModal('${escapeHTML(JSON.stringify(u))}')">Edit</button><button class="action-btn" style="background:#fee2e2; color:#b91c1c;" onclick="deleteUser('${u.id}')">Delete</button></div></td></tr>`;
+                        });
+                        usersModal.classList.remove('hidden');
+                    } else { alert('Error fetching users.'); }
+                } catch (err) { console.error(err); alert('Could not connect to server.'); }
+            });
+
+            // Create Shipment
+            document.getElementById('create-shipment-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = e.target.querySelector('button');
+                btn.textContent = 'Creating...';
+                const body = {
+                    shipment_type: document.getElementById('cs-type').value, carrier: document.getElementById('cs-carrier').value,
+                    user_email: document.getElementById('cs-email').value, sender_name: document.getElementById('cs-sender-name').value,
+                    sender_phone: document.getElementById('cs-sender-phone').value, sender_email: document.getElementById('cs-sender-email').value,
+                    sender_address: document.getElementById('cs-sender-address').value, receiver_name: document.getElementById('cs-name').value,
+                    receiver_phone: document.getElementById('cs-receiver-phone').value, receiver_address: document.getElementById('cs-address').value,
+                    weight: parseFloat(document.getElementById('cs-weight').value), dimensions: document.getElementById('cs-dimensions').value,
+                    current_date_time: document.getElementById('cs-current-date').value, departure_date_time: document.getElementById('cs-departure-date').value,
+                    delivery_date_time: document.getElementById('cs-delivery-date').value, description: document.getElementById('cs-desc').value
+                };
+                try {
+                    const res = await fetch('/api/admin/shipments', { method: 'POST', headers: fetchHeaders, body: JSON.stringify(body) });
+                    const data = await res.json();
+                    if (res.ok) {
+                        console.log("✅ Created Shipment:", data);
+                        alert(`✅ Shipment Created!\nTracking Number: ${data.trackingNumber}\n\nEmails have been sent to the receiver and sender.`);
+                        e.target.reset();
+                        document.getElementById('create').classList.remove('visible');
+                        loadDashboard();
+                    } else {
+                        console.error("❌ Error creating shipment:", data);
+                        alert(`❌ Error creating shipment:\n${data.message || 'Unknown error'}\n${data.error || ''}`);
                     }
-                } catch { if (window.showToast) window.showToast('Error fetching users', 'error'); }
-            }
+                } catch (networkErr) {
+                    console.error("❌ Network error:", networkErr);
+                    alert('Network error — could not connect to server. Please try again.');
+                }
+                btn.textContent = '🚀 Create Secure Shipment';
+            });
+
+            // Update Modal
+            const updateModal = document.getElementById('update-modal');
+            window.openUpdateModal = (trackingNum) => { document.getElementById('us-tracking').value = trackingNum; document.getElementById('update-tracking-display').textContent = trackingNum; updateModal.classList.remove('hidden'); };
+            const editModal = document.getElementById('edit-modal');
+            window.openEditModal = (shipDataString) => {
+                const ship = JSON.parse(shipDataString);
+                document.getElementById('es-tracking').value = ship.tracking_number; document.getElementById('edit-tracking-display').textContent = ship.tracking_number;
+                document.getElementById('es-type').value = ship.shipment_type || 'Air Freight'; document.getElementById('es-carrier').value = ship.carrier || 'DHL';
+                document.getElementById('es-sender-name').value = ship.sender_name || ''; document.getElementById('es-sender-phone').value = ship.sender_phone || '';
+                document.getElementById('es-sender-email').value = ship.sender_email || ''; document.getElementById('es-sender-address').value = ship.sender_address || '';
+                document.getElementById('es-name').value = ship.receiver_name || ''; document.getElementById('es-receiver-phone').value = ship.receiver_phone || '';
+                document.getElementById('es-address').value = ship.receiver_address || '';
+                document.getElementById('es-current-date').value = ship.current_date_time || ''; document.getElementById('es-departure-date').value = ship.departure_date_time || '';
+                document.getElementById('es-delivery-date').value = ship.delivery_date_time || '';
+                document.getElementById('es-weight').value = ship.weight || ''; document.getElementById('es-dimensions').value = ship.dimensions || '';
+                document.getElementById('es-desc').value = ship.description || '';
+                editModal.classList.remove('hidden');
+            };
+            document.getElementById('close-update-modal').addEventListener('click', () => { updateModal.classList.add('hidden'); document.getElementById('update-status-form').reset(); });
+            document.getElementById('close-edit-modal').addEventListener('click', () => { editModal.classList.add('hidden'); document.getElementById('edit-shipment-form').reset(); });
+
+            document.getElementById('update-status-form').addEventListener('submit', async (e) => {
+                e.preventDefault(); const btn = e.target.querySelector('button'); btn.textContent = 'Posting...';
+                const trackingNum = document.getElementById('us-tracking').value;
+                const body = { status_marker: document.getElementById('us-status').value, location: document.getElementById('us-location').value, description: document.getElementById('us-desc').value, current_date_time: document.getElementById('us-date').value };
+                const res = await fetch(`/api/admin/shipments/${trackingNum}/events`, { method: 'POST', headers: fetchHeaders, body: JSON.stringify(body) });
+                if (res.ok) { updateModal.classList.add('hidden'); e.target.reset(); loadDashboard(); alert('Updated tracker and sent notification.'); }
+                else { alert('Error adding tracking event'); }
+                btn.textContent = '📧 Post Update & Send Notification';
+            });
+
+            document.getElementById('edit-shipment-form').addEventListener('submit', async (e) => {
+                e.preventDefault(); const btn = e.target.querySelector('button'); const origText = btn.textContent; btn.textContent = 'Saving...';
+                const trackingNum = document.getElementById('es-tracking').value;
+                const body = { shipment_type: document.getElementById('es-type').value, carrier: document.getElementById('es-carrier').value, sender_name: document.getElementById('es-sender-name').value, sender_phone: document.getElementById('es-sender-phone').value, sender_email: document.getElementById('es-sender-email').value, sender_address: document.getElementById('es-sender-address').value, receiver_name: document.getElementById('es-name').value, receiver_phone: document.getElementById('es-receiver-phone').value, receiver_address: document.getElementById('es-address').value, weight: parseFloat(document.getElementById('es-weight').value), dimensions: document.getElementById('es-dimensions').value, current_date_time: document.getElementById('es-current-date').value, departure_date_time: document.getElementById('es-departure-date').value, delivery_date_time: document.getElementById('es-delivery-date').value, description: document.getElementById('es-desc').value };
+                const res = await fetch(`/api/admin/shipments/${trackingNum}`, { method: 'PUT', headers: fetchHeaders, body: JSON.stringify(body) });
+                if (res.ok) { editModal.classList.add('hidden'); loadDashboard(); alert('Shipment updated!'); } else { alert('Error updating shipment'); }
+                btn.textContent = origText;
+            });
+
+            window.deleteShipment = async (trackingNum) => {
+                if (!confirm(`Delete shipment ${trackingNum}? This cannot be undone.`)) return;
+                try { const res = await fetch(`/api/admin/shipments/${trackingNum}`, { method: 'DELETE', headers: fetchHeaders }); if (res.ok) { alert('Shipment deleted.'); loadDashboard(); } else { alert('Failed to delete.'); } }
+                catch (err) { console.error(err); alert('Error connecting to server.'); }
+            };
 
             window.openEditUserModal = (userStr) => {
-                const u = JSON.parse(userStr);
-                document.getElementById('eu-id').value = u.id;
-                document.getElementById('eu-id-display').textContent = u.id;
-                document.getElementById('eu-email').value = u.email;
-                document.getElementById('eu-type').value = u.is_auto ? '1' : '0';
-                document.getElementById('eu-password').value = '';
-                document.getElementById('edit-user-modal').classList.remove('hidden');
+                const user = JSON.parse(userStr);
+                document.getElementById('eu-id').value = user.id; document.getElementById('eu-id-display').textContent = user.id;
+                document.getElementById('eu-email').value = user.email; document.getElementById('eu-type').value = user.is_auto ? '1' : '0';
+                document.getElementById('eu-password').value = ''; editUserModal.classList.remove('hidden');
             };
 
-            const editUserForm = document.getElementById('edit-user-form');
-            if (editUserForm) {
-                editUserForm.addEventListener('submit', async (e) => {
-                    e.preventDefault();
-                    const id = document.getElementById('eu-id').value;
-                    const body = {
-                        email: document.getElementById('eu-email').value,
-                        is_auto: document.getElementById('eu-type').value === '1' ? 1 : 0,
-                        newPassword: document.getElementById('eu-password').value
-                    };
-                    try {
-                        const res = await fetch(`/api/admin/users/${id}`, { method: 'PUT', headers: fetchHeaders, body: JSON.stringify(body) });
-                        if (res.ok) { if (window.showToast) window.showToast('User updated'); document.getElementById('edit-user-modal').classList.add('hidden'); openUsersModal(); }
-                        else if (window.showToast) window.showToast('Failed to update user', 'error');
-                    } catch { if (window.showToast) window.showToast('Connection error', 'error'); }
-                });
-            }
+            document.getElementById('edit-user-form').addEventListener('submit', async (e) => {
+                e.preventDefault(); const btn = e.target.querySelector('button'); const origText = btn.textContent; btn.textContent = 'Saving...';
+                const userId = document.getElementById('eu-id').value;
+                const body = { email: document.getElementById('eu-email').value, is_auto: document.getElementById('eu-type').value === '1' ? 1 : 0, newPassword: document.getElementById('eu-password').value };
+                try { const res = await fetch(`/api/admin/users/${userId}`, { method: 'PUT', headers: fetchHeaders, body: JSON.stringify(body) }); if (res.ok) { editUserModal.classList.add('hidden'); alert('User updated!'); document.getElementById('card-users').click(); } else { const data = await res.json(); alert(`Error: ${data.message}`); } }
+                catch (err) { console.error(err); alert('Error connecting to server.'); }
+                btn.textContent = origText;
+            });
 
-            window.deleteUser = async (id) => {
-                const confirmed = await confirmCustom(`Are you sure you want to delete user #${id} and ALL their shipments?`);
-                if (!confirmed) return;
-                try {
-                    const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE', headers: fetchHeaders });
-                    if (res.ok) { if (window.showToast) window.showToast('User and data removed'); openUsersModal(); loadDashboard(true); }
-                    else if (window.showToast) window.showToast('Delete failed', 'error');
-                } catch { if (window.showToast) window.showToast('Connection error', 'error'); }
+            window.deleteUser = async (userId) => {
+                if (!confirm(`Delete user ID ${userId}? This also deletes their shipments.`)) return;
+                try { const res = await fetch(`/api/admin/users/${userId}`, { method: 'DELETE', headers: fetchHeaders }); if (res.ok) { alert('User deleted.'); document.getElementById('card-users').click(); loadDashboard(); } else { const data = await res.json(); alert(`Failed: ${data.message}`); } }
+                catch (err) { console.error(err); alert('Error connecting to server.'); }
             };
 
-            const cardUsers = document.getElementById('card-users');
-            if (cardUsers) cardUsers.addEventListener('click', openUsersModal);
-
-            // Other modals preserved logic...
-            document.querySelectorAll('.close-modal, .btn-outline[id^="close-"]').forEach(btn => btn.onclick = (e) => e.target.closest('.modal').classList.add('hidden'));
+            function escapeHTML(str) { return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)); }
         });
     </script>
-    <script src="global.js"></script>
 </body>
 
 </html>
