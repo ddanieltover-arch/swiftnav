@@ -1259,6 +1259,16 @@
                 return 'status-pending';
             }
 
+            function formatDateTimeLocal(dateStr) {
+                if (!dateStr) return '';
+                try {
+                    const d = new Date(dateStr);
+                    if (isNaN(d.getTime())) return '';
+                    const pad = (num) => num.toString().padStart(2, '0');
+                    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+                } catch (e) { return ''; }
+            }
+
             function populateOrdersTable(shipments) {
                 const tbody = document.getElementById('orders-table-body');
                 const active = shipments.filter(s => s.is_deleted !== 1).slice(0, 10);
@@ -1275,7 +1285,7 @@
                     <td>
                         <div style="display:flex; gap:4px;">
                             <button class="action-icon-btn" onclick="openUpdateModal('${s.tracking_number}')" title="Add Event">📍</button>
-                            <button class="action-icon-btn" onclick="openEditModal('${escapeHTML(JSON.stringify(s))}')" title="Edit">✏️</button>
+                            <button class="action-icon-btn" onclick="openEditModal('${s.tracking_number}')" title="Edit">✏️</button>
                             <button class="action-icon-btn danger" onclick="deleteShipment('${s.tracking_number}')" title="Delete">🗑️</button>
                         </div>
                     </td>
@@ -1356,7 +1366,7 @@
                 return ships.map(ship => {
                     let statusStyle = 'background:#f1f5f9; color:#334155;';
                     let statusLabel = ship.status;
-                    let actionsHtml = `<div style="display:flex; gap:0.5rem;"><button class="action-btn" onclick="openUpdateModal('${ship.tracking_number}')">Add Event</button><button class="action-btn" onclick="openEditModal('${escapeHTML(JSON.stringify(ship))}')">Edit</button><button class="action-btn" style="background:#fee2e2; color:#b91c1c;" onclick="deleteShipment('${ship.tracking_number}')">Delete</button></div>`;
+                    let actionsHtml = `<div style="display:flex; gap:0.5rem;"><button class="action-btn" onclick="openUpdateModal('${ship.tracking_number}')">Add Event</button><button class="action-btn" onclick="openEditModal('${ship.tracking_number}')">Edit</button><button class="action-btn" style="background:#fee2e2; color:#b91c1c;" onclick="deleteShipment('${ship.tracking_number}')">Delete</button></div>`;
                     if (ship.is_deleted === 1) { statusStyle = 'background:#fee2e2; color:#b91c1c;'; statusLabel = 'Deleted'; actionsHtml = '<span style="color:#94a3b8; font-style:italic;">N/A</span>'; }
                     else if (ship.status === 'Delivered') { statusStyle = 'background:#dcfce7; color:#15803d;'; }
                     return `<tr><td><strong>${ship.tracking_number}</strong></td><td>${ship.receiver_name}</td><td><span style="padding:4px 8px; border-radius:4px; font-size:0.875rem; font-weight:600; ${statusStyle}">${statusLabel}</span></td><td>${new Date(ship.created_at).toLocaleDateString()}</td><td>${actionsHtml}</td></tr>`;
@@ -1417,12 +1427,13 @@
                     const res = await fetch('/api/admin/users', { headers: fetchHeaders });
                     if (res.ok) {
                         const users = await res.json();
+                        window.allUsers = users;
                         const tbody = document.getElementById('users-table-body');
                         tbody.innerHTML = '';
                         users.forEach(u => {
                             const type = u.is_auto ? 'Auto-Created' : 'Registered';
                             const formattedDate = new Date(u.created_at).toLocaleString();
-                            tbody.innerHTML += `<tr><td><strong>${u.id}</strong></td><td>${escapeHTML(u.email)}</td><td><span style="padding:4px 8px; background:#f1f5f9; border-radius:4px; font-size:0.875rem;">${type}</span></td><td>${formattedDate}</td><td><div style="display:flex; gap:0.5rem;"><button class="action-btn" onclick="openEditUserModal('${escapeHTML(JSON.stringify(u))}')">Edit</button><button class="action-btn" style="background:#fee2e2; color:#b91c1c;" onclick="deleteUser('${u.id}')">Delete</button></div></td></tr>`;
+                            tbody.innerHTML += `<tr><td><strong>${u.id}</strong></td><td>${escapeHTML(u.email)}</td><td><span style="padding:4px 8px; background:#f1f5f9; border-radius:4px; font-size:0.875rem;">${type}</span></td><td>${formattedDate}</td><td><div style="display:flex; gap:0.5rem;"><button class="action-btn" onclick="openEditUserModal('${u.id}')">Edit</button><button class="action-btn" style="background:#fee2e2; color:#b91c1c;" onclick="deleteUser('${u.id}')">Delete</button></div></td></tr>`;
                         });
                         usersModal.classList.remove('hidden');
                     } else { alert('Error fetching users.'); }
@@ -1468,16 +1479,18 @@
             const updateModal = document.getElementById('update-modal');
             window.openUpdateModal = (trackingNum) => { document.getElementById('us-tracking').value = trackingNum; document.getElementById('update-tracking-display').textContent = trackingNum; updateModal.classList.remove('hidden'); };
             const editModal = document.getElementById('edit-modal');
-            window.openEditModal = (shipDataString) => {
-                const ship = JSON.parse(shipDataString);
+            window.openEditModal = (trackingNum) => {
+                const ship = (window.allShipments || []).find(s => s.tracking_number === trackingNum);
+                if (!ship) return;
                 document.getElementById('es-tracking').value = ship.tracking_number; document.getElementById('edit-tracking-display').textContent = ship.tracking_number;
                 document.getElementById('es-type').value = ship.shipment_type || 'Air Freight'; document.getElementById('es-carrier').value = ship.carrier || 'DHL';
                 document.getElementById('es-sender-name').value = ship.sender_name || ''; document.getElementById('es-sender-phone').value = ship.sender_phone || '';
                 document.getElementById('es-sender-email').value = ship.sender_email || ''; document.getElementById('es-sender-address').value = ship.sender_address || '';
                 document.getElementById('es-name').value = ship.receiver_name || ''; document.getElementById('es-receiver-phone').value = ship.receiver_phone || '';
                 document.getElementById('es-address').value = ship.receiver_address || '';
-                document.getElementById('es-current-date').value = ship.current_date_time || ''; document.getElementById('es-departure-date').value = ship.departure_date_time || '';
-                document.getElementById('es-delivery-date').value = ship.delivery_date_time || '';
+                document.getElementById('es-current-date').value = formatDateTimeLocal(ship.current_date_time);
+                document.getElementById('es-departure-date').value = formatDateTimeLocal(ship.departure_date_time);
+                document.getElementById('es-delivery-date').value = formatDateTimeLocal(ship.delivery_date_time);
                 document.getElementById('es-weight').value = ship.weight || ''; document.getElementById('es-dimensions').value = ship.dimensions || '';
                 document.getElementById('es-desc').value = ship.description || '';
                 editModal.classList.remove('hidden');
@@ -1510,8 +1523,9 @@
                 catch (err) { console.error(err); alert('Error connecting to server.'); }
             };
 
-            window.openEditUserModal = (userStr) => {
-                const user = JSON.parse(userStr);
+            window.openEditUserModal = (userId) => {
+                const user = (window.allUsers || []).find(u => u.id.toString() === userId.toString());
+                if (!user) return;
                 document.getElementById('eu-id').value = user.id; document.getElementById('eu-id-display').textContent = user.id;
                 document.getElementById('eu-email').value = user.email; document.getElementById('eu-type').value = user.is_auto ? '1' : '0';
                 document.getElementById('eu-password').value = ''; editUserModal.classList.remove('hidden');
