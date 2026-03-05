@@ -341,10 +341,19 @@ app.post('/api/track', async (req, res) => {
     }
 
     db.get(`SELECT * FROM Shipments WHERE tracking_number = ?`, [trackingNumber.toUpperCase()], async (err, shipment) => {
-        if (err || !shipment) return res.status(404).json({ message: 'Shipment not found' });
+        if (err || !shipment) return res.status(404).json({ message: 'Shipment not found. Please check your tracking number.' });
+
+        // 🔒 SECURITY: Validate that the email belongs to the receiver of this shipment.
+        // On first-time tracking (before receiver_email is set), we allow it and then lock it.
+        const receiverEmail = (shipment.receiver_email || '').toLowerCase().trim();
+        const providedEmail = email.toLowerCase().trim();
+
+        if (receiverEmail && receiverEmail !== providedEmail) {
+            return res.status(403).json({ message: 'This tracking number is not associated with the provided email address.' });
+        }
 
         // Auto-Account Creation Logic
-        db.get(`SELECT * FROM Users WHERE email = ?`, [email.toLowerCase()], async (err, user) => {
+        db.get(`SELECT * FROM Users WHERE email = ?`, [providedEmail], async (err, user) => {
             let currentUser = user;
             let isNewUser = false;
 
@@ -357,17 +366,17 @@ app.post('/api/track', async (req, res) => {
                 // Note: We use db.run and a Promise wrapper to get the lastID accurately
                 // For simplicity, using a callback
                 await new Promise((resolve, reject) => {
-                    db.run(`INSERT INTO Users (name, email, password_hash, is_auto, role) VALUES (?, ?, ?, 1, 'user')`, [defaultName, email.toLowerCase(), hash], function (err) {
+                    db.run(`INSERT INTO Users (name, email, password_hash, is_auto, role) VALUES (?, ?, ?, 1, 'user')`, [defaultName, providedEmail, hash], function (err) {
                         if (err) return reject(err);
-                        currentUser = { id: this.lastID, name: defaultName, email: email.toLowerCase(), role: 'user' };
+                        currentUser = { id: this.lastID, name: defaultName, email: providedEmail, role: 'user' };
                         resolve();
                     });
                 });
             }
 
-            // Link shipment if not linked
-            if (shipment.user_id !== currentUser.id) {
-                db.run(`UPDATE Shipments SET user_id = ?, receiver_email = ? WHERE tracking_number = ?`, [currentUser.id, email.toLowerCase(), shipment.tracking_number]);
+            // Link shipment and lock receiver_email if not already set
+            if (shipment.user_id !== currentUser.id || !receiverEmail) {
+                db.run(`UPDATE Shipments SET user_id = ?, receiver_email = ? WHERE tracking_number = ?`, [currentUser.id, providedEmail, shipment.tracking_number]);
             }
 
             // Generate JWT Token

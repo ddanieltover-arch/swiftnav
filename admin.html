@@ -666,6 +666,28 @@
             background: #f0f9ff;
         }
 
+        .action-icon-btn {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 7px;
+            padding: 6px 9px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.15s;
+            line-height: 1;
+        }
+
+        .action-icon-btn:hover {
+            background: #e0f2fe;
+            border-color: #90caf9;
+            transform: scale(1.08);
+        }
+
+        .action-icon-btn.danger:hover {
+            background: #fee2e2;
+            border-color: #fca5a5;
+        }
+
         @media (max-width: 1024px) {
             .stats-row {
                 grid-template-columns: repeat(2, 1fr);
@@ -1361,6 +1383,34 @@
             document.getElementById('close-users-modal').addEventListener('click', () => { usersModal.classList.add('hidden'); });
             const editUserModal = document.getElementById('edit-user-modal');
             document.getElementById('close-edit-user-modal').addEventListener('click', () => { editUserModal.classList.add('hidden'); });
+
+            // Pending shipments stat card
+            document.getElementById('card-pending').addEventListener('click', () => {
+                const pendingShipments = (window.allShipments || []).filter(ship => ship.status === 'Pending' && ship.is_deleted !== 1);
+                document.getElementById('total-table-body').innerHTML = buildModalTableRows(pendingShipments);
+                document.querySelector('#total-modal .modal-header h2').textContent = '⏳ Pending Shipments';
+                totalModal.classList.remove('hidden');
+            });
+            // Reset total modal title when it closes
+            document.getElementById('close-total-modal').addEventListener('click', () => { totalModal.classList.add('hidden'); document.querySelector('#total-modal .modal-header h2').textContent = '📊 Total Shipments'; }, { capture: false });
+
+            // Delivered shipments stat card
+            document.getElementById('card-delivered').addEventListener('click', () => {
+                const deliveredShipments = (window.allShipments || []).filter(ship => ship.status === 'Delivered' && ship.is_deleted !== 1);
+                document.getElementById('active-table-body').innerHTML = buildModalTableRows(deliveredShipments);
+                document.querySelector('#active-modal .modal-header h2').textContent = '✅ Delivered Shipments';
+                activeModal.classList.remove('hidden');
+            });
+            // Reset active modal title when it closes
+            const existingCloseActive = document.getElementById('close-active-modal');
+            existingCloseActive.replaceWith(existingCloseActive.cloneNode(true));
+            document.getElementById('close-active-modal').addEventListener('click', () => { activeModal.classList.add('hidden'); document.querySelector('#active-modal .modal-header h2').textContent = '🚚 Active Shipments'; });
+
+            // Notification bell button
+            document.querySelector('.notif-btn').addEventListener('click', () => {
+                const unread = (window.allShipments || []).filter(s => s.status === 'Pending' && s.is_deleted !== 1).length;
+                alert(`🔔 Notifications\n\nYou have ${unread} pending shipment${unread !== 1 ? 's' : ''} that need attention.\n\nGo to the Pending Packages card to see them.`);
+            });
 
             document.getElementById('card-users').addEventListener('click', async () => {
                 try {
