@@ -290,14 +290,14 @@ app.post('/api/auth/forgot-password', (req, res) => {
                     <p style="margin: 0; color: #991b1b; font-size: 14px;">⏱️ This code expires in <strong>15 minutes</strong>. If you didn't request this, you can safely ignore this email.</p>
                 </div>
             `);
-            if (transporter) {
-                transporter.sendMail({
-                    from: process.env.EMAIL_FROM || '"SwiftNav Logistics" <noreply@swiftnav.com>',
-                    to: email,
-                    subject: '🔐 Password Reset Code - SwiftNav Logistics',
-                    html: resetHtml
-                }).catch(err => console.error("Forgot PWD email error:", err));
-            }
+
+            resend.emails.send({
+                from: process.env.EMAIL_FROM || 'SwiftNav Logistics <onboarding@resend.dev>',
+                to: email,
+                subject: '🔐 Password Reset Code - SwiftNav Logistics',
+                html: resetHtml
+            }).catch(err => console.error("Forgot PWD email error:", err));
+
             res.json({ message: 'Reset code sent if email exists' });
         });
     });
@@ -931,28 +931,26 @@ app.post('/api/contact', async (req, res) => {
         </div>
     `);
 
-    if (transporter) {
-        try {
-            await transporter.sendMail({
-                from: process.env.EMAIL_FROM || '"SwiftNav Logistics" <noreply@swiftnav.com>',
-                to: process.env.EMAIL_USER || 'admin@swiftnav.com',
-                replyTo: email,
-                subject: `📬 New Contact Request from ${name}`,
-                html: adminHtml
-            });
+    try {
+        await resend.emails.send({
+            from: process.env.EMAIL_FROM || 'SwiftNav Logistics <onboarding@resend.dev>',
+            to: process.env.EMAIL_USER || 'admin@swiftnav.com',
+            replyTo: email,
+            subject: `📬 New Contact Request from ${name}`,
+            html: adminHtml
+        });
 
-            // Send confirmation to the customer
-            await transporter.sendMail({
-                from: process.env.EMAIL_FROM || '"SwiftNav Logistics" <noreply@swiftnav.com>',
-                to: email,
-                subject: '✅ We received your message — SwiftNav Logistics',
-                html: customerHtml
-            });
+        // Send confirmation to the customer
+        await resend.emails.send({
+            from: process.env.EMAIL_FROM || 'SwiftNav Logistics <onboarding@resend.dev>',
+            to: email,
+            subject: '✅ We received your message — SwiftNav Logistics',
+            html: customerHtml
+        });
 
-            console.log(`✅ Contact form email sent from ${email}`);
-        } catch (emailErr) {
-            console.error('Contact email error:', emailErr);
-        }
+        console.log(`✅ Contact form email sent from ${email}`);
+    } catch (emailErr) {
+        console.error('Contact email error:', emailErr);
     }
 
     res.status(200).json({ message: 'Your message has been sent successfully! We will get back to you shortly.' });
