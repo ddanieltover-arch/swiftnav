@@ -1242,11 +1242,29 @@ svg {
 }
 
 /* === Contact & Service Layouts (Mobile) === */
-@media (max-width: 900px) {
+@media (max-width: 768px) {
     .contact-grid {
         display: flex !important;
-        flex-direction: column-reverse;
-        gap: 2rem;
+        flex-direction: column-reverse !important;
+        gap: 1.5rem !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+        align-items: center;
+    }
+
+    .contact-grid>div {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    .contact-grid form {
+        grid-template-columns: 1fr !important;
+    }
+
+    .contact-grid form h3,
+    .contact-grid form .form-group,
+    .contact-grid form button {
+        grid-column: span 1 !important;
     }
 
     .service-grid {
