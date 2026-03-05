@@ -184,56 +184,54 @@ app.post('/api/auth/register', async (req, res) => {
             }
 
             // Send welcome email with credentials and security notice
-            if (transporter) {
-                const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
-                const welcomeRegHtml = buildEmailTemplate('Welcome Aboard!', 'Your Account Has Been Created', `
-                    <p style="font-size: 16px; color: #374151;">Hello <strong>${name}</strong>,</p>
-                    <p style="color: #4b5563;">Welcome to <strong>SwiftNav Logistics</strong>! Your account has been successfully created. Here are your login credentials:</p>
-                    
-                    <div style="background: #f0f9ff; border: 2px solid #1e3a8a; border-radius: 8px; padding: 25px; margin: 20px 0;">
-                        <h3 style="margin: 0 0 15px; color: #1e3a8a; font-size: 16px; text-align: center;">🔑 Your Login Credentials</h3>
-                        <table style="width: 100%; border-collapse: collapse;">
-                            <tr><td style="padding: 10px 0; color: #6b7280; width: 30%;">📧 Email:</td><td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${email}</td></tr>
-                            <tr><td style="padding: 10px 0; color: #6b7280;">🔒 Password:</td><td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${password}</td></tr>
-                        </table>
-                    </div>
+            const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+            const welcomeRegHtml = buildEmailTemplate('Welcome Aboard!', 'Your Account Has Been Created', `
+                <p style="font-size: 16px; color: #374151;">Hello <strong>${name}</strong>,</p>
+                <p style="color: #4b5563;">Welcome to <strong>SwiftNav Logistics</strong>! Your account has been successfully created. Here are your login credentials:</p>
+                
+                <div style="background: #f0f9ff; border: 2px solid #1e3a8a; border-radius: 8px; padding: 25px; margin: 20px 0;">
+                    <h3 style="margin: 0 0 15px; color: #1e3a8a; font-size: 16px; text-align: center;">🔑 Your Login Credentials</h3>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr><td style="padding: 10px 0; color: #6b7280; width: 30%;">📧 Email:</td><td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${email}</td></tr>
+                        <tr><td style="padding: 10px 0; color: #6b7280;">🔒 Password:</td><td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${password}</td></tr>
+                    </table>
+                </div>
 
-                    <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 18px; border-radius: 4px; margin: 20px 0;">
-                        <h3 style="margin: 0 0 10px; color: #991b1b; font-size: 15px;">🛡️ Security Notice</h3>
-                        <ul style="margin: 0; padding-left: 18px; color: #991b1b; font-size: 14px; line-height: 1.8;">
-                            <li><strong>Never share</strong> your login credentials with anyone.</li>
-                            <li>SwiftNav Logistics will <strong>never ask</strong> for your password via email, phone, or chat.</li>
-                            <li>We recommend changing your password after your first login.</li>
-                            <li>If you suspect unauthorized access, reset your password immediately.</li>
-                        </ul>
-                    </div>
+                <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 18px; border-radius: 4px; margin: 20px 0;">
+                    <h3 style="margin: 0 0 10px; color: #991b1b; font-size: 15px;">🛡️ Security Notice</h3>
+                    <ul style="margin: 0; padding-left: 18px; color: #991b1b; font-size: 14px; line-height: 1.8;">
+                        <li><strong>Never share</strong> your login credentials with anyone.</li>
+                        <li>SwiftNav Logistics will <strong>never ask</strong> for your password via email, phone, or chat.</li>
+                        <li>We recommend changing your password after your first login.</li>
+                        <li>If you suspect unauthorized access, reset your password immediately.</li>
+                    </ul>
+                </div>
 
-                    <div style="text-align: center; margin: 25px 0;">
-                        <a href="${baseUrl}" style="display: inline-block; background: linear-gradient(135deg, #1e3a8a, #1e40af); color: #ffffff; text-decoration: none; padding: 14px 35px; border-radius: 8px; font-weight: 600; font-size: 15px;">🚀 Go to Your Dashboard</a>
-                    </div>
+                <div style="text-align: center; margin: 25px 0;">
+                    <a href="${baseUrl}" style="display: inline-block; background: linear-gradient(135deg, #1e3a8a, #1e40af); color: #ffffff; text-decoration: none; padding: 14px 35px; border-radius: 8px; font-weight: 600; font-size: 15px;">🚀 Go to Your Dashboard</a>
+                </div>
 
-                    <div style="background: #f0fdf4; border-left: 4px solid #22c55e; padding: 15px; border-radius: 4px; margin: 20px 0;">
-                        <h3 style="margin: 0 0 8px; color: #166534; font-size: 15px;">✨ What You Can Do</h3>
-                        <ul style="margin: 0; padding-left: 18px; color: #15803d; font-size: 14px; line-height: 1.8;">
-                            <li>Track your shipments in real-time on a live map</li>
-                            <li>View your complete shipment history and timeline</li>
-                            <li>Receive instant email & SMS notifications on status changes</li>
-                            <li>Access detailed shipment information anytime</li>
-                        </ul>
-                    </div>
-                `);
+                <div style="background: #f0fdf4; border-left: 4px solid #22c55e; padding: 15px; border-radius: 4px; margin: 20px 0;">
+                    <h3 style="margin: 0 0 8px; color: #166534; font-size: 15px;">✨ What You Can Do</h3>
+                    <ul style="margin: 0; padding-left: 18px; color: #15803d; font-size: 14px; line-height: 1.8;">
+                        <li>Track your shipments in real-time on a live map</li>
+                        <li>View your complete shipment history and timeline</li>
+                        <li>Receive instant email & SMS notifications on status changes</li>
+                        <li>Access detailed shipment information anytime</li>
+                    </ul>
+                </div>
+            `);
 
-                transporter.sendMail({
-                    from: process.env.EMAIL_FROM || '"SwiftNav Logistics" <noreply@swiftnav.com>',
-                    to: email,
-                    subject: '🎉 Welcome to SwiftNav Logistics — Your Account is Ready!',
-                    html: welcomeRegHtml
-                }).then(() => {
-                    console.log(`✅ Welcome email sent to ${email}`);
-                }).catch(emailErr => {
-                    console.error('Welcome email error:', emailErr);
-                });
-            }
+            resend.emails.send({
+                from: process.env.EMAIL_FROM || 'SwiftNav Logistics <onboarding@resend.dev>',
+                to: email,
+                subject: '🎉 Welcome to SwiftNav Logistics — Your Account is Ready!',
+                html: welcomeRegHtml
+            }).then(() => {
+                console.log(`✅ Welcome email sent to ${email}`);
+            }).catch(emailErr => {
+                console.error('Welcome email error:', emailErr);
+            });
 
             res.status(201).json({ message: 'User registered successfully', userId: this.lastID });
         });
