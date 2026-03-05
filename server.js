@@ -569,7 +569,7 @@ app.post('/api/admin/shipments', authenticate, isAdmin, (req, res) => {
                     `;
 
                     resend.emails.send({
-                        from: process.env.EMAIL_FROM || 'SwiftNav Logistics <noreply@swiftnav.com>',
+                        from: process.env.EMAIL_FROM || 'SwiftNav Logistics <onboarding@resend.dev>',
                         to: user_email,
                         subject: `Your Shipment ${trackingNumber} Has Been Created — SwiftNav Logistics`,
                         html: welcomeHtml
@@ -626,7 +626,7 @@ app.post('/api/admin/shipments', authenticate, isAdmin, (req, res) => {
                     `;
 
                     resend.emails.send({
-                        from: process.env.EMAIL_FROM || 'SwiftNav Logistics <noreply@swiftnav.com>',
+                        from: process.env.EMAIL_FROM || 'SwiftNav Logistics <onboarding@resend.dev>',
                         to: sender_email,
                         subject: `Shipment Confirmation: ${trackingNumber} — SwiftNav Logistics`,
                         html: senderHtml
@@ -789,7 +789,7 @@ app.post('/api/admin/shipments/:trackingNumber/events', authenticate, isAdmin, a
                             </div>
                         `);
                         const info = await resend.emails.send({
-                            from: process.env.EMAIL_FROM || 'SwiftNav Logistics <noreply@swiftnav.com>',
+                            from: process.env.EMAIL_FROM || 'SwiftNav Logistics <onboarding@resend.dev>',
                             to: shipmentInfo.user_email,
                             subject: `${statusIcon} Shipment Update: ${trackingNumber} — ${status_marker}`,
                             html: updateHtml
