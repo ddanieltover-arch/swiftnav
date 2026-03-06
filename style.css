@@ -1272,6 +1272,12 @@ svg {
         flex-direction: column-reverse;
         gap: 2rem !important;
     }
+
+    /* Tracking inputs: push text past the emoji icons */
+    #quick-track-form input {
+        padding-left: 3rem !important;
+        font-size: 0.95rem !important;
+    }
 }
 
 @keyframes shine {
