@@ -146,7 +146,13 @@ const initializeDatabase = async () => {
             origin TEXT,
             destination TEXT,
             created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-            is_deleted INTEGER DEFAULT 0
+            is_deleted INTEGER DEFAULT 0,
+            anim_start_lat REAL,
+            anim_start_lng REAL,
+            anim_target_lat REAL,
+            anim_target_lng REAL,
+            anim_start_time TEXT,
+            anim_target_time TEXT
         )`;
 
         const createEvents = `CREATE TABLE IF NOT EXISTS TrackingEvents (
@@ -156,6 +162,8 @@ const initializeDatabase = async () => {
             location TEXT,
             description TEXT,
             current_date_time TEXT,
+            lat REAL,
+            lng REAL,
             timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
         )`;
 
@@ -193,6 +201,18 @@ const initializeDatabase = async () => {
             await db.query(`ALTER TABLE Shipments ADD COLUMN current_date_time TEXT`);
             console.log('✅ Migration: added current_date_time to Shipments');
         } catch (e) { /* ignore */ }
+
+        // Migration: add animation metadata to Shipments
+        try { await db.query(`ALTER TABLE Shipments ADD COLUMN anim_start_lat REAL`); } catch (e) { }
+        try { await db.query(`ALTER TABLE Shipments ADD COLUMN anim_start_lng REAL`); } catch (e) { }
+        try { await db.query(`ALTER TABLE Shipments ADD COLUMN anim_target_lat REAL`); } catch (e) { }
+        try { await db.query(`ALTER TABLE Shipments ADD COLUMN anim_target_lng REAL`); } catch (e) { }
+        try { await db.query(`ALTER TABLE Shipments ADD COLUMN anim_start_time TEXT`); } catch (e) { }
+        try { await db.query(`ALTER TABLE Shipments ADD COLUMN anim_target_time TEXT`); } catch (e) { }
+
+        // Migration: add coords to TrackingEvents
+        try { await db.query(`ALTER TABLE TrackingEvents ADD COLUMN lat REAL`); } catch (e) { }
+        try { await db.query(`ALTER TABLE TrackingEvents ADD COLUMN lng REAL`); } catch (e) { }
 
         // Migration: change old admin email to new info email
         try {

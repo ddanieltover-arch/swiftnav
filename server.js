@@ -489,10 +489,10 @@ app.post('/api/admin/shipments', authenticate, isAdmin, (req, res) => {
     const initialStatus = 'Pending';
 
     const createShipment = async (userId) => {
-        // Auto-Geocode initial position
-        const geo = await geocodeLocation(receiver_address);
-        const lat = geo ? geo.lat : null;
-        const lon = geo ? geo.lon : null;
+        // Auto-Geocode initial position (Sender's address as start)
+        const geoOrigin = await geocodeLocation(sender_address);
+        const originLat = geoOrigin ? geoOrigin.lat : null;
+        const originLon = geoOrigin ? geoOrigin.lon : null;
 
         db.run(`INSERT INTO Shipments (
             tracking_number, user_id, shipment_type, carrier, 
@@ -500,15 +500,21 @@ app.post('/api/admin/shipments', authenticate, isAdmin, (req, res) => {
             receiver_name, receiver_phone, receiver_email, receiver_address, 
             weight, dimensions, status, 
             current_date_time, departure_date_time, delivery_date_time, description,
-            current_lat, current_lng
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            current_lat, current_lng,
+            anim_start_lat, anim_start_lng,
+            anim_target_lat, anim_target_lng,
+            anim_start_time, anim_target_time
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 trackingNumber, userId, shipment_type, carrier,
                 sender_name, sender_phone, sender_email, sender_address,
                 receiver_name, receiver_phone, user_email, receiver_address,
                 weight, dimensions, initialStatus,
                 current_date_time, departure_date_time, delivery_date_time, description,
-                lat, lon
+                originLat, originLon,
+                originLat, originLon, // anim start
+                originLat, originLon, // anim target
+                current_date_time, current_date_time // times
             ],
             function (err) {
                 if (err) {
@@ -518,8 +524,8 @@ app.post('/api/admin/shipments', authenticate, isAdmin, (req, res) => {
                 console.log(`✅ Shipment ${trackingNumber} saved to DB.`);
 
                 // Add initial tracking event
-                db.run(`INSERT INTO TrackingEvents (tracking_number, status_marker, location, description, current_date_time) VALUES (?, ?, ?, ?, ?)`,
-                    [trackingNumber, initialStatus, sender_address, 'Shipment created and is pending processing.', current_date_time]);
+                db.run(`INSERT INTO TrackingEvents (tracking_number, status_marker, location, description, current_date_time, lat, lng) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                    [trackingNumber, initialStatus, sender_address, 'Shipment created and is pending processing.', current_date_time, originLat, originLon]);
 
                 // Send welcome email to the receiver with tracking info
                 if (user_email) {
@@ -749,30 +755,55 @@ app.post('/api/admin/shipments/:trackingNumber/events', authenticate, isAdmin, a
         }
     }
 
-    db.run(`INSERT INTO TrackingEvents (tracking_number, status_marker, location, description, current_date_time) VALUES (?, ?, ?, ?, ?)`,
-        [trackingNumber, status_marker, location, description, current_date_time], function (err) {
-            if (err) return res.status(500).json({ message: 'Failed to add event' });
+    db.get(`SELECT current_lat, current_lng, current_date_time FROM Shipments WHERE tracking_number = ?`, [trackingNumber], async (err, prevShipment) => {
+        if (err || !prevShipment) return res.status(404).json({ message: 'Shipment not found' });
 
-            // Update shipment general status and coords (only if geo changed, or always if we have lat/lng)
-            if (current_lat && current_lng) {
-                db.run(`UPDATE Shipments SET status = ?, current_lat = ?, current_lng = ?, current_date_time = ?, description = ? WHERE tracking_number = ?`,
-                    [status_marker, current_lat, current_lng, current_date_time, description, trackingNumber]);
-            } else {
-                db.run(`UPDATE Shipments SET status = ?, current_date_time = ?, description = ? WHERE tracking_number = ?`,
-                    [status_marker, current_date_time, description, trackingNumber]);
-            }
+        db.run(`INSERT INTO TrackingEvents (tracking_number, status_marker, location, description, current_date_time, lat, lng) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [trackingNumber, status_marker, location, description, current_date_time, current_lat, current_lng], function (err) {
+                if (err) return res.status(500).json({ message: 'Failed to add event' });
 
-            // Try to send email notification
-            db.get(`SELECT s.*, u.email as user_email, u.name as user_name FROM Shipments s 
+                // Update shipment general status and coords
+                // And update animation leg: from prev location to new location
+                db.run(`UPDATE Shipments SET 
+                    status = ?, 
+                    current_lat = ?, 
+                    current_lng = ?, 
+                    current_date_time = ?, 
+                    description = ?,
+                    anim_start_lat = ?, 
+                    anim_start_lng = ?,
+                    anim_target_lat = ?, 
+                    anim_target_lng = ?,
+                    anim_start_time = ?,
+                    anim_target_time = ?
+                    WHERE tracking_number = ?`,
+                    [
+                        status_marker,
+                        current_lat,
+                        current_lng,
+                        current_date_time,
+                        description,
+                        prevShipment.current_lat,
+                        prevShipment.current_lng,
+                        current_lat,
+                        current_lng,
+                        prevShipment.current_date_time,
+                        current_date_time,
+                        trackingNumber
+                    ]
+                );
+
+                // Try to send email notification
+                db.get(`SELECT s.*, u.email as user_email, u.name as user_name FROM Shipments s 
                     LEFT JOIN Users u ON s.user_id = u.id 
                     WHERE s.tracking_number = ?`, [trackingNumber], async (err, shipmentInfo) => {
 
-                if (shipmentInfo && shipmentInfo.user_email) {
-                    try {
-                        const statusColor = status_marker === 'Delivered' ? '#22c55e' : (status_marker === 'In Transit' ? '#3b82f6' : '#f59e0b');
-                        const statusIcon = status_marker === 'Delivered' ? '✅' : (status_marker === 'In Transit' ? '🚚' : '📋');
-                        const updateBaseUrl = process.env.BASE_URL || 'http://localhost:5000';
-                        const updateHtml = buildEmailTemplate('Shipment Update', `${statusIcon} ${status_marker}`, `
+                    if (shipmentInfo && shipmentInfo.user_email) {
+                        try {
+                            const statusColor = status_marker === 'Delivered' ? '#22c55e' : (status_marker === 'In Transit' ? '#3b82f6' : '#f59e0b');
+                            const statusIcon = status_marker === 'Delivered' ? '✅' : (status_marker === 'In Transit' ? '🚚' : '📋');
+                            const updateBaseUrl = process.env.BASE_URL || 'http://localhost:5000';
+                            const updateHtml = buildEmailTemplate('Shipment Update', `${statusIcon} ${status_marker}`, `
                             <p style="font-size: 16px; color: #374151;">Hello <strong>${shipmentInfo.user_name || 'Valued Customer'}</strong>,</p>
                             <p style="color: #4b5563;">There's a new update on your shipment:</p>
                             
@@ -795,31 +826,32 @@ app.post('/api/admin/shipments/:trackingNumber/events', authenticate, isAdmin, a
                                 <a href="${updateBaseUrl}" style="display: inline-block; background: linear-gradient(135deg, #1e3a8a, #1e40af); color: #ffffff; text-decoration: none; padding: 14px 35px; border-radius: 8px; font-weight: 600; font-size: 15px;">🔍 Track Your Shipment Live</a>
                             </div>
                         `);
-                        const info = await resend.emails.send({
-                            from: process.env.EMAIL_FROM || 'SwiftNav Logistics <info@swiftnavlog.com>',
-                            to: shipmentInfo.user_email,
-                            subject: `${statusIcon} Shipment Update: ${trackingNumber} — ${status_marker}`,
-                            html: updateHtml
-                        });
-                        console.log(`✅ Email sent for ${trackingNumber} to ${shipmentInfo.user_email}`);
-                    } catch (emailErr) {
-                        console.error('Failed to send email:', emailErr);
+                            const info = await resend.emails.send({
+                                from: process.env.EMAIL_FROM || 'SwiftNav Logistics <info@swiftnavlog.com>',
+                                to: shipmentInfo.user_email,
+                                subject: `${statusIcon} Shipment Update: ${trackingNumber} — ${status_marker}`,
+                                html: updateHtml
+                            });
+                            console.log(`✅ Email sent for ${trackingNumber} to ${shipmentInfo.user_email}`);
+                        } catch (emailErr) {
+                            console.error('Failed to send email:', emailErr);
+                        }
                     }
-                }
 
-                // SMS Notification
-                if (shipmentInfo && shipmentInfo.receiver_phone) {
-                    const smsBody = `📦 SwiftNav Logistics\n\nShipment ${trackingNumber} Update:\n• Status: ${status_marker}\n• Location: ${location || 'N/A'}\n• Time: ${current_date_time || 'N/A'}\n\n${description || ''}\n\nTrack live: ${process.env.BASE_URL || 'http://localhost:5000'}`;
-                    sendSMS(shipmentInfo.receiver_phone, smsBody);
-                }
-                if (shipmentInfo && shipmentInfo.sender_phone && shipmentInfo.sender_phone !== shipmentInfo.receiver_phone) {
-                    const senderSmsBody = `📦 SwiftNav Logistics\n\nYour shipment ${trackingNumber} has been updated:\n• Status: ${status_marker}\n• Location: ${location || 'N/A'}\n\nTrack live: ${process.env.BASE_URL || 'http://localhost:5000'}`;
-                    sendSMS(shipmentInfo.sender_phone, senderSmsBody);
-                }
+                    // SMS Notification
+                    if (shipmentInfo && shipmentInfo.receiver_phone) {
+                        const smsBody = `📦 SwiftNav Logistics\n\nShipment ${trackingNumber} Update:\n• Status: ${status_marker}\n• Location: ${location || 'N/A'}\n• Time: ${current_date_time || 'N/A'}\n\n${description || ''}\n\nTrack live: ${process.env.BASE_URL || 'http://localhost:5000'}`;
+                        sendSMS(shipmentInfo.receiver_phone, smsBody);
+                    }
+                    if (shipmentInfo && shipmentInfo.sender_phone && shipmentInfo.sender_phone !== shipmentInfo.receiver_phone) {
+                        const senderSmsBody = `📦 SwiftNav Logistics\n\nYour shipment ${trackingNumber} has been updated:\n• Status: ${status_marker}\n• Location: ${location || 'N/A'}\n\nTrack live: ${process.env.BASE_URL || 'http://localhost:5000'}`;
+                        sendSMS(shipmentInfo.sender_phone, senderSmsBody);
+                    }
+                });
+
+                res.status(201).json({ message: 'Tracking event added' });
             });
-
-            res.status(201).json({ message: 'Tracking event added' });
-        });
+    });
 });
 
 // Admin overview stats

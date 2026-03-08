@@ -349,27 +349,18 @@
         let mapMarker = null;
         let mapPolyline = null;
         let historicalMarkers = [];
-        const geocodeCache = {};
 
-        document.getElementById('close-details-btn').addEventListener('click', () => {
-            document.getElementById('shipment-details').classList.add('hidden');
-            document.getElementById('shipment-list').classList.remove('hidden');
-        });
-
-        // Module 21: More Info Modal Listeners
-        document.getElementById('more-info-btn').addEventListener('click', () => {
-            document.getElementById('more-info-modal').classList.remove('hidden');
-        });
-        document.getElementById('close-more-info').addEventListener('click', () => {
-            document.getElementById('more-info-modal').classList.add('hidden');
-        });
-        window.addEventListener('click', (e) => {
-            if (e.target === document.getElementById('more-info-modal')) {
-                document.getElementById('more-info-modal').classList.add('hidden');
-            }
-        });
+        // Global animation state
+        let animationFrameId = null;
+        let activeMarker = null;
 
         async function viewShipmentDetails(trackingNumber) {
+            // Cancel any previous animation
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+
             document.getElementById('shipment-list').classList.add('hidden');
             const detailsSection = document.getElementById('shipment-details');
             detailsSection.classList.remove('hidden');
@@ -395,9 +386,7 @@
                 }).addTo(map);
             }
             // Must call invalidateSize after the container transitions from hidden to visible
-            // Use multiple timeouts to catch slow renders
-            setTimeout(() => { map.invalidateSize(); }, 100);
-            setTimeout(() => { map.invalidateSize(); }, 400);
+            setTimeout(() => { map.invalidateSize(); }, 200);
 
             try {
                 const res = await fetch(`/api/track/${trackingNumber}`);
@@ -410,33 +399,8 @@
                 }
 
                 const s = data.shipment;
-                // Populate Module 21 Modal Data
-                document.getElementById('m-sender-name').textContent = s.sender_name || 'N/A';
-                document.getElementById('m-sender-email').textContent = s.sender_email || 'N/A';
-                document.getElementById('m-sender-phone').textContent = s.sender_phone || 'N/A';
-                document.getElementById('m-sender-address').textContent = s.sender_address || 'N/A';
-                document.getElementById('m-receiver-name').textContent = s.receiver_name || 'N/A';
-                document.getElementById('m-receiver-email').textContent = s.receiver_email || 'N/A';
-                document.getElementById('m-receiver-phone').textContent = s.receiver_phone || 'N/A';
-                document.getElementById('m-receiver-address').textContent = s.receiver_address || 'N/A';
-                document.getElementById('m-service-type').textContent = s.shipment_type || 'N/A';
-                document.getElementById('m-courier').textContent = s.carrier || 'N/A';
-                document.getElementById('m-weight').textContent = s.weight || '0';
-                document.getElementById('m-dimensions').textContent = s.dimensions || '0 × 0 × 0';
-
-                const deliveryDate = s.delivery_date_time;
-                if (deliveryDate) {
-                    try {
-                        const dateObj = new Date(deliveryDate);
-                        const humanString = dateObj.toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-                        const humanTime = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                        document.getElementById('m-expected-delivery').textContent = `${humanString} at ${humanTime}`;
-                    } catch (e) {
-                        document.getElementById('m-expected-delivery').textContent = 'Invalid Date';
-                    }
-                } else {
-                    document.getElementById('m-expected-delivery').textContent = 'Pending';
-                }
+                // Populate Module 21 Modal Data (Omitted for brevity, assumed same)
+                populateModal(s);
 
                 // Clear previous map layers
                 if (mapPolyline) { map.removeLayer(mapPolyline); mapPolyline = null; }
@@ -444,48 +408,18 @@
                 historicalMarkers.forEach(m => map.removeLayer(m));
                 historicalMarkers = [];
 
-                // Update Timeline & Geocode
+                // Update Timeline
                 timeline.innerHTML = '';
                 const routeCoords = [];
 
                 if (data.events && data.events.length > 0) {
-                    timeline.innerHTML = '<p style="font-size: 0.875rem; color: var(--clr-text-muted);">Processing map route...</p>';
                     const htmlEvents = [];
-
-                    // Module 18: Smart Address Formatting for Geocoding & Display
-                    const formatLocation = (opt) => {
-                        if (!opt) return "Unknown Location";
-                        const parts = opt.split(',').map(s => s.trim());
-                        if (parts.length <= 1) return opt;
-
-                        const isUSA = parts[parts.length - 1].toLowerCase() === 'united states' || parts[parts.length - 1].toLowerCase() === 'usa';
-                        if (isUSA) {
-                            // National (USA): City + Zip
-                            // Assuming parts = [Street, City, Zip, USA] or similar
-                            if (parts.length >= 3) {
-                                return `${parts[parts.length - 3]}, ${parts[parts.length - 2]}`;
-                            }
-                        } else {
-                            // International: City + Country
-                            if (parts.length >= 2) {
-                                return `${parts[parts.length - 2]}, ${parts[parts.length - 1]}`;
-                            }
-                        }
-                        return opt;
-                    };
-
-                    for (let i = 0; i < data.events.length; i++) {
-                        const event = data.events[i];
-                        const originalLocation = event.location;
-                        event.location = formatLocation(originalLocation);
-
+                    data.events.forEach((event, i) => {
                         const isLast = i === data.events.length - 1;
-                        const isDelivered = event.status_marker === 'Delivered';
-                        let statusClass = 'completed';
-                        if (isLast && !isDelivered) statusClass = 'active';
+                        let statusClass = (isLast && event.status_marker !== 'Delivered') ? 'active' : 'completed';
 
                         htmlEvents.push(`
-                            <div class="timeline-item ${statusClass}" style="animation: fadeUp 0.5s ease-out ${i * 0.1}s forwards; margin-bottom: 1.5rem; position:relative; padding-left: 2rem; border-left: 2px solid ${statusClass === 'active' ? 'var(--clr-primary)' : 'var(--clr-border)'}">
+                            <div class="timeline-item ${statusClass}" style="margin-bottom: 1.5rem; position:relative; padding-left: 2rem; border-left: 2px solid ${statusClass === 'active' ? 'var(--clr-primary)' : 'var(--clr-border)'}">
                                 <div style="position:absolute; left:-6px; top:0; width:10px; height:10px; border-radius:50%; background:${statusClass === 'active' ? 'var(--clr-primary)' : 'var(--clr-border)'}"></div>
                                 <h4 style="margin:0; font-size:1rem; color:var(--clr-text);">${event.status_marker}</h4>
                                 <p style="margin:0.25rem 0; font-size:0.875rem; color:var(--clr-text-muted);">${event.location} - ${event.description}</p>
@@ -493,111 +427,83 @@
                             </div>
                         `);
 
-                        // Geocode this event's location
-                        let baseCoords = null;
-                        if (originalLocation) {
-                            baseCoords = geocodeCache[originalLocation];
-                            if (!baseCoords) {
-                                try {
-                                    const controller = new AbortController();
-                                    const timeoutId = setTimeout(() => controller.abort(), 8000);
-                                    let geoRes = await fetch(`/api/geocode?q=${encodeURIComponent(originalLocation)}`, {
-                                        signal: controller.signal
-                                    });
-                                    clearTimeout(timeoutId);
-                                    let geoData = await geoRes.json();
-
-                                    if (!geoData.lat && !geoData.lon) {
-                                        const fallbackQuery = formatLocation(originalLocation);
-                                        if (fallbackQuery !== originalLocation) {
-                                            const ctrl2 = new AbortController();
-                                            const tid2 = setTimeout(() => ctrl2.abort(), 8000);
-                                            geoRes = await fetch(`/api/geocode?q=${encodeURIComponent(fallbackQuery)}`, {
-                                                signal: ctrl2.signal
-                                            });
-                                            clearTimeout(tid2);
-                                            geoData = await geoRes.json();
-                                        }
-                                    }
-
-                                    if (geoData.lat && geoData.lon) {
-                                        baseCoords = [geoData.lat, geoData.lon];
-                                        geocodeCache[originalLocation] = baseCoords;
-                                        await new Promise(r => setTimeout(r, 600));
-                                    }
-                                } catch (e) {
-                                    console.warn('Geocode skipped:', originalLocation);
-                                }
-                            }
-                        }
-                        // Note: Intentionally NOT falling back to data.shipment.current_lat for historical events
-                        // so that failed geocodes don't stack markers on top of the final destination.
-
-
-                        if (baseCoords && !isNaN(baseCoords[0]) && !isNaN(baseCoords[1])) {
-                            const jitterLat = (Math.random() - 0.5) * 0.0005;
-                            const jitterLon = (Math.random() - 0.5) * 0.0005;
-                            const coords = [baseCoords[0] + jitterLat, baseCoords[1] + jitterLon];
-
+                        // Use pre-geocoded coordinates if available
+                        if (event.lat && event.lng) {
+                            const coords = [event.lat, event.lng];
                             routeCoords.push(coords);
-                            if (!isLast) {
-                                if (i === 0) {
-                                    const originIcon = L.divIcon({
-                                        className: 'custom-map-marker',
-                                        html: `<div style="background-color:#22c55e; width:16px; height:16px; border-radius:50%; border:2px solid white; box-shadow:0 0 8px rgba(34,197,94,0.6);"></div>`,
-                                        iconSize: [16, 16],
-                                        iconAnchor: [8, 8]
-                                    });
-                                    const originMarker = L.marker(coords, { icon: originIcon }).bindPopup(`<strong>Origin / Sender's Address:</strong> <br> ${event.location}`);
-                                    historicalMarkers.push(originMarker);
-                                } else {
-                                    const pastMarker = L.circleMarker(coords, {
-                                        radius: 6, fillColor: "#9ca3af", color: "#ffffff",
-                                        weight: 2, opacity: 1, fillOpacity: 0.8
-                                    }).bindPopup(`<strong>Checkpoint (${event.status_marker}):</strong> <br> ${event.location}`);
-                                    historicalMarkers.push(pastMarker);
-                                }
+
+                            if (i === 0) {
+                                const originIcon = L.divIcon({
+                                    className: 'custom-map-marker',
+                                    html: `<div style="background-color:#22c55e; width:16px; height:16px; border-radius:50%; border:2px solid white; box-shadow:0 0 8px rgba(34,197,94,0.6);"></div>`,
+                                    iconSize: [16, 16],
+                                    iconAnchor: [8, 8]
+                                });
+                                historicalMarkers.push(L.marker(coords, { icon: originIcon }).addTo(map));
+                            } else if (!isLast) {
+                                historicalMarkers.push(L.circleMarker(coords, {
+                                    radius: 5, fillColor: "#9ca3af", color: "#ffffff", weight: 2, opacity: 1, fillOpacity: 0.8
+                                }).addTo(map));
                             }
                         }
-                    } // end for loop
+                    });
 
                     timeline.innerHTML = htmlEvents.join('');
 
                     // Draw Route
                     if (routeCoords.length > 1) {
                         mapPolyline = L.polyline(routeCoords, {
-                            color: '#1e3a8a', weight: 3, opacity: 0.7,
-                            dashArray: '8, 8', className: 'animated-route'
+                            color: '#1e3a8a', weight: 3, opacity: 0.5, dashArray: '5, 5'
                         }).addTo(map);
                     }
 
-                    historicalMarkers.forEach(m => m.addTo(map));
+                    // --- Animation Implementation ---
+                    const startLat = s.anim_start_lat || s.current_lat;
+                    const startLng = s.anim_start_lng || s.current_lng;
+                    const targetLat = s.anim_target_lat || s.current_lat;
+                    const targetLng = s.anim_target_lng || s.current_lng;
+                    const startTime = new Date(s.anim_start_time || s.created_at).getTime();
+                    const targetTime = new Date(s.anim_target_time || s.created_at).getTime();
 
-                    // Draw Final Marker
-                    const latestCoords = routeCoords.length > 0 ? routeCoords[routeCoords.length - 1] : (data.shipment.current_lat ? [data.shipment.current_lat, data.shipment.current_lng] : null);
-                    if (latestCoords) {
-                        const customIcon = L.divIcon({
-                            className: 'custom-map-marker',
-                            html: `<div class="heartbeat-marker"></div>`,
-                            iconSize: [20, 20], iconAnchor: [10, 10]
-                        });
-                        mapMarker = L.marker(latestCoords, { icon: customIcon }).addTo(map);
-                        mapMarker.bindPopup(`<strong>Current Location:</strong> <br> ${data.events[data.events.length - 1].location}`).openPopup();
+                    const customIcon = L.divIcon({
+                        className: 'custom-map-marker',
+                        html: `<div class="heartbeat-marker"></div>`,
+                        iconSize: [20, 20], iconAnchor: [10, 10]
+                    });
+
+                    mapMarker = L.marker([startLat, startLng], { icon: customIcon }).addTo(map);
+                    mapMarker.bindPopup(`<strong>Shipment Update</strong><br>${s.status}`).openPopup();
+
+                    function animateMarker() {
+                        const now = Date.now();
+                        let progress = 1;
+
+                        if (targetTime > startTime) {
+                            progress = (now - startTime) / (targetTime - startTime);
+                            progress = Math.max(0, Math.min(1, progress));
+                        }
+
+                        const currentLat = startLat + (targetLat - startLat) * progress;
+                        const currentLng = startLng + (targetLng - startLng) * progress;
+
+                        mapMarker.setLatLng([currentLat, currentLng]);
+
+                        if (progress < 1) {
+                            animationFrameId = requestAnimationFrame(animateMarker);
+                        } else {
+                            animationFrameId = null;
+                        }
                     }
 
-                    // Module 23: Map Auto-Zoom Fit Bounds
-                    // Fired at 900ms to ensure it runs AFTER the final map.invalidateSize() at 850ms
+                    animateMarker();
+
+                    // Map fit bounds
+                    const group = new L.featureGroup([mapMarker, ...historicalMarkers]);
+                    if (mapPolyline) group.addLayer(mapPolyline);
                     setTimeout(() => {
-                        const group = new L.featureGroup();
-                        if (mapPolyline) group.addLayer(mapPolyline);
-                        if (mapMarker) group.addLayer(mapMarker);
-                        historicalMarkers.forEach(m => group.addLayer(m));
-                        if (group.getLayers().length > 0) {
-                            map.fitBounds(group.getBounds(), { padding: [50, 50], maxZoom: 11 });
-                        } else {
-                            map.setZoom(4); // Default wide zoom if no layers
-                        }
-                    }, 900);
+                        map.fitBounds(group.getBounds(), { padding: [50, 50], maxZoom: 12 });
+                    }, 500);
+
                 } else {
                     timeline.innerHTML = '<p>No history available.</p>';
                 }
@@ -607,6 +513,50 @@
                 timeline.innerHTML = '<p>Error fetching shipment details.</p>';
             }
         }
+
+        function populateModal(s) {
+            document.getElementById('m-sender-name').textContent = s.sender_name || 'N/A';
+            document.getElementById('m-sender-email').textContent = s.sender_email || 'N/A';
+            document.getElementById('m-sender-phone').textContent = s.sender_phone || 'N/A';
+            document.getElementById('m-sender-address').textContent = s.sender_address || 'N/A';
+            document.getElementById('m-receiver-name').textContent = s.receiver_name || 'N/A';
+            document.getElementById('m-receiver-email').textContent = s.receiver_email || 'N/A';
+            document.getElementById('m-receiver-phone').textContent = s.receiver_phone || 'N/A';
+            document.getElementById('m-receiver-address').textContent = s.receiver_address || 'N/A';
+            document.getElementById('m-service-type').textContent = s.shipment_type || 'N/A';
+            document.getElementById('m-courier').textContent = s.carrier || 'N/A';
+            document.getElementById('m-weight').textContent = s.weight || '0';
+            document.getElementById('m-dimensions').textContent = s.dimensions || '0 × 0 × 0';
+
+            const deliveryDate = s.delivery_date_time;
+            if (deliveryDate) {
+                try {
+                    const dateObj = new Date(deliveryDate);
+                    const humanString = dateObj.toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                    const humanTime = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    document.getElementById('m-expected-delivery').textContent = `${humanString} at ${humanTime}`;
+                } catch (e) { document.getElementById('m-expected-delivery').textContent = 'Invalid Date'; }
+            } else {
+                document.getElementById('m-expected-delivery').textContent = 'Pending';
+            }
+        }
+        document.getElementById('close-details-btn').addEventListener('click', () => {
+            document.getElementById('shipment-details').classList.add('hidden');
+            document.getElementById('shipment-list').classList.remove('hidden');
+        });
+
+        // Module 21: More Info Modal Listeners
+        document.getElementById('more-info-btn').addEventListener('click', () => {
+            document.getElementById('more-info-modal').classList.remove('hidden');
+        });
+        document.getElementById('close-more-info').addEventListener('click', () => {
+            document.getElementById('more-info-modal').classList.add('hidden');
+        });
+        window.addEventListener('click', (e) => {
+            if (e.target === document.getElementById('more-info-modal')) {
+                document.getElementById('more-info-modal').classList.add('hidden');
+            }
+        });
     </script>
     <script src="global.js"></script>
 </body>
