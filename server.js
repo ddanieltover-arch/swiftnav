@@ -125,7 +125,7 @@ async function sendSMS(to, body) {
 
 // === Reusable Email Template Builder ===
 function buildEmailTemplate(headerTitle, headerSubtitle, bodyContent) {
-    const baseUrl = process.env.BASE_URL || 'https://www.swiftnavlog.com';
+    const baseUrl = process.env.BASE_URL || 'https://swiftnavlog.com';
     return `
         <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
             <div style="background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
@@ -184,7 +184,7 @@ app.post('/api/auth/register', async (req, res) => {
             }
 
             // Send welcome email with credentials and security notice
-            const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+            const baseUrl = process.env.BASE_URL || 'https://swiftnavlog.com';
             const welcomeRegHtml = buildEmailTemplate('Welcome Aboard!', 'Your Account Has Been Created', `
                 <p style="font-size: 16px; color: #374151;">Hello <strong>${name}</strong>,</p>
                 <p style="color: #4b5563;">Welcome to <strong>SwiftNav Logistics</strong>! Your account has been successfully created. Here are your login credentials:</p>
@@ -529,7 +529,7 @@ app.post('/api/admin/shipments', authenticate, isAdmin, (req, res) => {
 
                 // Send welcome email to the receiver with tracking info
                 if (user_email) {
-                    const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+                    const baseUrl = process.env.BASE_URL || 'https://swiftnavlog.com';
                     const welcomeHtml = `
                         <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
                             <div style="background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
@@ -595,7 +595,7 @@ app.post('/api/admin/shipments', authenticate, isAdmin, (req, res) => {
 
                 // Send confirmation email to the sender
                 if (sender_email) {
-                    const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+                    const baseUrl = process.env.BASE_URL || 'https://swiftnavlog.com';
                     const senderHtml = `
                         <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
                             <div style="background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
@@ -802,7 +802,7 @@ app.post('/api/admin/shipments/:trackingNumber/events', authenticate, isAdmin, a
                         try {
                             const statusColor = status_marker === 'Delivered' ? '#22c55e' : (status_marker === 'In Transit' ? '#3b82f6' : '#f59e0b');
                             const statusIcon = status_marker === 'Delivered' ? '✅' : (status_marker === 'In Transit' ? '🚚' : '📋');
-                            const updateBaseUrl = process.env.BASE_URL || 'http://localhost:5000';
+                            const updateBaseUrl = process.env.BASE_URL || 'https://swiftnavlog.com';
                             const updateHtml = buildEmailTemplate('Shipment Update', `${statusIcon} ${status_marker}`, `
                             <p style="font-size: 16px; color: #374151;">Hello <strong>${shipmentInfo.user_name || 'Valued Customer'}</strong>,</p>
                             <p style="color: #4b5563;">There's a new update on your shipment:</p>
@@ -840,11 +840,11 @@ app.post('/api/admin/shipments/:trackingNumber/events', authenticate, isAdmin, a
 
                     // SMS Notification
                     if (shipmentInfo && shipmentInfo.receiver_phone) {
-                        const smsBody = `📦 SwiftNav Logistics\n\nShipment ${trackingNumber} Update:\n• Status: ${status_marker}\n• Location: ${location || 'N/A'}\n• Time: ${current_date_time || 'N/A'}\n\n${description || ''}\n\nTrack live: ${process.env.BASE_URL || 'http://localhost:5000'}`;
+                        const smsBody = `📦 SwiftNav Logistics\n\nShipment ${trackingNumber} Update:\n• Status: ${status_marker}\n• Location: ${location || 'N/A'}\n• Time: ${current_date_time || 'N/A'}\n\n${description || ''}\n\nTrack live: ${process.env.BASE_URL || 'https://swiftnavlog.com'}`;
                         sendSMS(shipmentInfo.receiver_phone, smsBody);
                     }
                     if (shipmentInfo && shipmentInfo.sender_phone && shipmentInfo.sender_phone !== shipmentInfo.receiver_phone) {
-                        const senderSmsBody = `📦 SwiftNav Logistics\n\nYour shipment ${trackingNumber} has been updated:\n• Status: ${status_marker}\n• Location: ${location || 'N/A'}\n\nTrack live: ${process.env.BASE_URL || 'http://localhost:5000'}`;
+                        const senderSmsBody = `📦 SwiftNav Logistics\n\nYour shipment ${trackingNumber} has been updated:\n• Status: ${status_marker}\n• Location: ${location || 'N/A'}\n\nTrack live: ${process.env.BASE_URL || 'https://swiftnavlog.com'}`;
                         sendSMS(shipmentInfo.sender_phone, senderSmsBody);
                     }
                 });
