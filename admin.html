@@ -813,6 +813,9 @@
                 <h1 id="greeting-msg">Good Morning</h1>
             </div>
             <div class="greeting-actions">
+                <div id="db-status-tag" style="padding:4px 12px; border-radius:30px; font-size:0.75rem; font-weight:700; display:flex; align-items:center; gap:6px; background:#f1f5f9; color:#64748b; margin-right:15px;" title="Checking database persistence status...">
+                    <span style="width:8px; height:8px; border-radius:50%; background:#94a3b8;"></span> LOCAL (SQLite)
+                </div>
                 <button class="btn-outline" id="export-csv-btn">⬇ Export CSV</button>
                 <button class="btn-filled" id="toggle-create-btn">📦 Add New Shipment</button>
             </div>
@@ -865,6 +868,21 @@
         <div class="orders-section">
             <div class="orders-header">
                 <h3>Incoming Orders</h3>
+                <div class="filter-controls" style="display:flex; gap:10px; align-items:center;">
+                    <div style="position:relative; flex:1; max-width:300px;">
+                        <input type="text" id="shipment-search" placeholder="Search tracking, receiver, or sender..." 
+                            style="width:100%; padding:8px 12px 8px 35px; border:1.5px solid #e2e8f0; border-radius:8px; font-size:0.875rem;">
+                        <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#94a3b8;">🔍</span>
+                    </div>
+                    <select id="filter-status" style="padding:8px; border:1.5px solid #e2e8f0; border-radius:8px; font-size:0.875rem; color:#475569;">
+                        <option value="All">All Statuses</option>
+                        <option value="Pending">Pending</option>
+                        <option value="In Transit">In Transit</option>
+                        <option value="Out for Delivery">Out for Delivery</option>
+                        <option value="Delivered">Delivered</option>
+                        <option value="On Hold">On Hold</option>
+                    </select>
+                </div>
             </div>
             <div style="overflow-x: auto;">
                 <table class="orders-table">
@@ -906,10 +924,7 @@
                 <div class="form-group">
                     <label>Shipment Carrier*</label>
                     <select id="cs-carrier" required>
-                        <option value="DHL">DHL</option>
-                        <option value="USPS">USPS</option>
-                        <option value="FedEx">FedEx</option>
-                        <option value="UPS">UPS</option>
+                        <option value="SwiftNav Logistics">SwiftNav Logistics</option>
                     </select>
                 </div>
                 <div class="section-divider">
@@ -950,6 +965,8 @@
                         required placeholder="e.g., 15.5"></div>
                 <div class="form-group"><label>Size (cm)*</label><input type="text" id="cs-dimensions" required
                         placeholder="e.g., 10"></div>
+                <div class="form-group"><label>Payment Method*</label><input type="text" id="cs-payment-method" required
+                        placeholder="e.g., Bank Transfer, Cash"></div>
                 <div class="form-group" style="grid-column: span 2;"><label>Description Details</label><textarea
                         id="cs-desc" rows="3" placeholder="Additional details about the shipment"></textarea></div>
                 <button type="submit" class="btn-filled"
@@ -1014,10 +1031,7 @@
                         <option value="Van Move">Van Move</option>
                     </select></div>
                 <div class="form-group"><label>Shipment Carrier</label><select id="es-carrier" required>
-                        <option value="DHL">DHL</option>
-                        <option value="USPS">USPS</option>
-                        <option value="FedEx">FedEx</option>
-                        <option value="UPS">UPS</option>
+                        <option value="SwiftNav Logistics">SwiftNav Logistics</option>
                     </select></div>
                 <div class="section-divider">
                     <h3>Sender</h3>
@@ -1055,6 +1069,8 @@
                         required placeholder="e.g., 15.5"></div>
                 <div class="form-group"><label>Size (cm)*</label><input type="text" id="es-dimensions" required
                         placeholder="e.g., 10"></div>
+                <div class="form-group"><label>Payment Method*</label><input type="text" id="es-payment-method" required
+                        placeholder="e.g., Bank Transfer, Cash"></div>
                 <div class="form-group" style="grid-column: span 2;"><label>Description Details</label><textarea
                         id="es-desc" rows="3" placeholder="Additional details"></textarea></div>
                 <button type="submit" class="btn-filled"
@@ -1070,6 +1086,11 @@
             <div class="modal-header">
                 <h2>👥 Registered Users</h2>
                 <p>Overview of all user accounts on the platform</p>
+                <div style="margin-top:1rem; position:relative;">
+                    <input type="text" id="user-search" placeholder="Search users by email..." 
+                        style="width:100%; padding:8px 35px; border:1.5px solid #e2e8f0; border-radius:8px; font-size:0.875rem;">
+                    <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#94a3b8;">🔍</span>
+                </div>
             </div>
             <div style="overflow-x: auto;">
                 <table class="shipment-table">
@@ -1252,6 +1273,27 @@
                 } catch (err) { console.error("Failed to load admin dashboard", err); }
             }
 
+            // Search and Filter logic
+            const searchInput = document.getElementById('shipment-search');
+            const statusFilter = document.getElementById('filter-status');
+
+            async function searchShipments() {
+                const q = searchInput.value;
+                const status = statusFilter.value;
+                try {
+                    const res = await fetch(`/api/admin/shipments/search?q=${encodeURIComponent(q)}&status=${status}`, { headers: fetchHeaders });
+                    const shipments = await res.json();
+                    populateOrdersTable(shipments);
+                } catch (err) { console.error("Search failed", err); }
+            }
+
+            let searchTimeout;
+            searchInput.addEventListener('input', () => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(searchShipments, 300);
+            });
+            statusFilter.addEventListener('change', searchShipments);
+
             function getStatusBadgeClass(status) {
                 if (status === 'Delivered') return 'status-delivered';
                 if (status === 'In Transit' || status === 'Out for Delivery') return 'status-transit';
@@ -1433,12 +1475,36 @@
                         users.forEach(u => {
                             const type = u.is_auto ? 'Auto-Created' : 'Registered';
                             const formattedDate = new Date(u.created_at).toLocaleString();
-                            tbody.innerHTML += `<tr><td><strong>${u.id}</strong></td><td>${escapeHTML(u.email)}</td><td><span style="padding:4px 8px; background:#f1f5f9; border-radius:4px; font-size:0.875rem;">${type}</span></td><td>${formattedDate}</td><td><div style="display:flex; gap:0.5rem;"><button class="action-btn" onclick="openEditUserModal('${u.id}')">Edit</button><button class="action-btn" style="background:#fee2e2; color:#b91c1c;" onclick="deleteUser('${u.id}')">Delete</button></div></td></tr>`;
+                            tbody.innerHTML += `<tr class="user-row" data-email="${u.email.toLowerCase()}"><td><strong>${u.id}</strong></td><td>${escapeHTML(u.email)}</td><td><span style="padding:4px 8px; background:#f1f5f9; border-radius:4px; font-size:0.875rem;">${type}</span></td><td>${formattedDate}</td><td><div style="display:flex; gap:0.5rem;"><button class="action-btn" onclick="openEditUserModal('${u.id}')">Edit</button><button class="action-btn" style="background:#fee2e2; color:#b91c1c;" onclick="deleteUser('${u.id}')">Delete</button></div></td></tr>`;
                         });
                         usersModal.classList.remove('hidden');
                     } else { alert('Error fetching users.'); }
                 } catch (err) { console.error(err); alert('Could not connect to server.'); }
             });
+
+            // User Search client-side
+            document.getElementById('user-search').addEventListener('input', (e) => {
+                const q = e.target.value.toLowerCase();
+                document.querySelectorAll('.user-row').forEach(row => {
+                    row.style.display = row.dataset.email.includes(q) ? '' : 'none';
+                });
+            });
+
+            // Update DB Status Tag
+            function updateDBStatus() {
+                const tag = document.getElementById('db-status-tag');
+                if (window.allShipments && window.location.hostname === 'localhost') {
+                    tag.innerHTML = '<span style="width:8px; height:8px; border-radius:50%; background:#f59e0b;"></span> LOCAL (SQLite)';
+                    tag.title = "Local storage is persistent on your machine, but won't sync to production.";
+                } else if (window.allShipments) {
+                    tag.innerHTML = '<span style="width:8px; height:8px; border-radius:50%; background:#22c55e;"></span> PRODUCTION (PostgreSQL)';
+                    tag.style.background = '#dcfce7'; 
+                    tag.style.color = '#15803d';
+                    tag.title = "Your shipments are safe in a persistent cloud database.";
+                }
+            }
+            // Call it after loading
+            setTimeout(updateDBStatus, 1000);
 
             // Create Shipment
             document.getElementById('create-shipment-form').addEventListener('submit', async (e) => {
@@ -1452,6 +1518,7 @@
                     sender_address: document.getElementById('cs-sender-address').value, receiver_name: document.getElementById('cs-name').value,
                     receiver_phone: document.getElementById('cs-receiver-phone').value, receiver_address: document.getElementById('cs-address').value,
                     weight: parseFloat(document.getElementById('cs-weight').value), dimensions: document.getElementById('cs-dimensions').value,
+                    payment_method: document.getElementById('cs-payment-method').value,
                     current_date_time: document.getElementById('cs-current-date').value, departure_date_time: document.getElementById('cs-departure-date').value,
                     delivery_date_time: document.getElementById('cs-delivery-date').value, description: document.getElementById('cs-desc').value
                 };
@@ -1492,6 +1559,7 @@
                 document.getElementById('es-departure-date').value = formatDateTimeLocal(ship.departure_date_time);
                 document.getElementById('es-delivery-date').value = formatDateTimeLocal(ship.delivery_date_time);
                 document.getElementById('es-weight').value = ship.weight || ''; document.getElementById('es-dimensions').value = ship.dimensions || '';
+                document.getElementById('es-payment-method').value = ship.payment_method || '';
                 document.getElementById('es-desc').value = ship.description || '';
                 editModal.classList.remove('hidden');
             };
@@ -1511,7 +1579,7 @@
             document.getElementById('edit-shipment-form').addEventListener('submit', async (e) => {
                 e.preventDefault(); const btn = e.target.querySelector('button'); const origText = btn.textContent; btn.textContent = 'Saving...';
                 const trackingNum = document.getElementById('es-tracking').value;
-                const body = { shipment_type: document.getElementById('es-type').value, carrier: document.getElementById('es-carrier').value, sender_name: document.getElementById('es-sender-name').value, sender_phone: document.getElementById('es-sender-phone').value, sender_email: document.getElementById('es-sender-email').value, sender_address: document.getElementById('es-sender-address').value, receiver_name: document.getElementById('es-name').value, receiver_phone: document.getElementById('es-receiver-phone').value, receiver_address: document.getElementById('es-address').value, weight: parseFloat(document.getElementById('es-weight').value), dimensions: document.getElementById('es-dimensions').value, current_date_time: document.getElementById('es-current-date').value, departure_date_time: document.getElementById('es-departure-date').value, delivery_date_time: document.getElementById('es-delivery-date').value, description: document.getElementById('es-desc').value };
+                const body = { shipment_type: document.getElementById('es-type').value, carrier: document.getElementById('es-carrier').value, sender_name: document.getElementById('es-sender-name').value, sender_phone: document.getElementById('es-sender-phone').value, sender_email: document.getElementById('es-sender-email').value, sender_address: document.getElementById('es-sender-address').value, receiver_name: document.getElementById('es-name').value, receiver_phone: document.getElementById('es-receiver-phone').value, receiver_address: document.getElementById('es-address').value, weight: parseFloat(document.getElementById('es-weight').value), dimensions: document.getElementById('es-dimensions').value, payment_method: document.getElementById('es-payment-method').value, current_date_time: document.getElementById('es-current-date').value, departure_date_time: document.getElementById('es-departure-date').value, delivery_date_time: document.getElementById('es-delivery-date').value, description: document.getElementById('es-desc').value };
                 const res = await fetch(`/api/admin/shipments/${trackingNum}`, { method: 'PUT', headers: fetchHeaders, body: JSON.stringify(body) });
                 if (res.ok) { editModal.classList.add('hidden'); loadDashboard(); alert('Shipment updated!'); } else { alert('Error updating shipment'); }
                 btn.textContent = origText;

@@ -5,18 +5,23 @@ const bcrypt = require('bcrypt');
 const fs = require('fs');
 
 const dbURL = process.env.DATABASE_URL;
-// Explicitly force SQLite if we are on localhost or if the URL is missing/commented out
-const isLocal = !dbURL || dbURL.includes('localhost') || !dbURL.startsWith('postgres');
-const isProd = !isLocal && process.env.NODE_ENV === 'production';
+// Force PostgreSQL in production; default to SQLite only for local development.
+const isProd = process.env.NODE_ENV === 'production';
+const isLocal = !isProd;
 
-// Log for debugging (this will help the user see what's being detected)
-console.log('🔍 Database URL detected:', dbURL ? `Present (Starts with ${dbURL.substring(0, 8)}...)` : 'None');
-console.log('🔍 isLocal:', isLocal, '| isProd:', isProd);
+// Log for debugging
+console.log('🔍 Environment:', isProd ? 'PRODUCTION' : 'LOCAL');
+console.log('🔍 Database URL detected:', dbURL ? `Present` : 'None');
 
 let db;
 
-// Hybrid Database System: PostgreSQL for Production (Render), SQLite for Local
 if (isProd) {
+    if (!dbURL || !dbURL.startsWith('postgres')) {
+        console.error('❌ CRITICAL ERROR: DATABASE_URL is missing or invalid in production mode.');
+        console.error('💡 SQLite cannot be used in production as it resets on every redeploy.');
+        process.exit(1); // Stop the server to prevent data loss/confusion
+    }
+    
     console.log('🌐 Using PostgreSQL (Production Mode)');
     const pool = new Pool({
         connectionString: dbURL,
@@ -136,6 +141,7 @@ const initializeDatabase = async () => {
             receiver_address TEXT,
             weight REAL,
             dimensions TEXT,
+            payment_method TEXT,
             current_lat REAL,
             current_lng REAL,
             status TEXT,
@@ -184,10 +190,10 @@ const initializeDatabase = async () => {
             console.log('✅ Migration: added current_date_time to TrackingEvents');
         } catch (e) { /* column already exists — ignore */ }
 
-        // Migration: add is_deleted to Shipments if missing
+        // Migration: add payment_method to Shipments if missing
         try {
-            await db.query(`ALTER TABLE Shipments ADD COLUMN is_deleted INTEGER DEFAULT 0`);
-            console.log('✅ Migration: added is_deleted to Shipments');
+            await db.query(`ALTER TABLE Shipments ADD COLUMN payment_method TEXT`);
+            console.log('✅ Migration: added payment_method to Shipments');
         } catch (e) { /* ignore */ }
 
         // Migration: add created_at to Shipments if missing

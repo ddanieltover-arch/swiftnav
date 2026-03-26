@@ -431,6 +431,39 @@ app.get('/api/admin/users', authenticate, isAdmin, (req, res) => {
     });
 });
 
+// Search and Filter Shipments (Admin)
+app.get('/api/admin/shipments/search', authenticate, isAdmin, (req, res) => {
+    const { q, status, carrier } = req.query;
+    let query = `SELECT s.*, u.email as user_email FROM Shipments s LEFT JOIN Users u ON s.user_id = u.id WHERE COALESCE(s.is_deleted, 0) != 1`;
+    const params = [];
+
+    if (q) {
+        params.push(`%${q}%`);
+        query += ` AND (s.tracking_number LIKE ? OR s.receiver_name LIKE ? OR s.sender_name LIKE ? OR u.email LIKE ?)`;
+        params.push(`%${q}%`, `%${q}%`, `%${q}%`);
+    }
+
+    if (status && status !== 'All') {
+        params.push(status);
+        query += ` AND s.status = ?`;
+    }
+
+    if (carrier && carrier !== 'All') {
+        params.push(carrier);
+        query += ` AND s.carrier = ?`;
+    }
+
+    query += ` ORDER BY s.created_at DESC LIMIT 50`;
+
+    db.all(query, params, (err, shipments) => {
+        if (err) {
+            console.error("Search error:", err);
+            return res.status(500).json({ message: 'Database error scouring shipments' });
+        }
+        res.json(shipments);
+    });
+});
+
 // Update User (Admin)
 app.put('/api/admin/users/:id', authenticate, isAdmin, async (req, res) => {
     const userId = req.params.id;
@@ -479,7 +512,7 @@ app.post('/api/admin/shipments', authenticate, isAdmin, (req, res) => {
         user_email, shipment_type, carrier,
         sender_name, sender_phone, sender_email, sender_address,
         receiver_name, receiver_phone, receiver_address,
-        weight, dimensions,
+        weight, dimensions, payment_method,
         current_date_time, departure_date_time, delivery_date_time, description
     } = req.body;
 
@@ -498,18 +531,18 @@ app.post('/api/admin/shipments', authenticate, isAdmin, (req, res) => {
             tracking_number, user_id, shipment_type, carrier, 
             sender_name, sender_phone, sender_email, sender_address, 
             receiver_name, receiver_phone, receiver_email, receiver_address, 
-            weight, dimensions, status, 
+            weight, dimensions, payment_method, status, 
             current_date_time, departure_date_time, delivery_date_time, description,
             current_lat, current_lng,
             anim_start_lat, anim_start_lng,
             anim_target_lat, anim_target_lng,
             anim_start_time, anim_target_time
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 trackingNumber, userId, shipment_type, carrier,
                 sender_name, sender_phone, sender_email, sender_address,
                 receiver_name, receiver_phone, user_email, receiver_address,
-                weight, dimensions, initialStatus,
+                weight, dimensions, payment_method, initialStatus,
                 current_date_time, departure_date_time, delivery_date_time, description,
                 originLat, originLon,
                 originLat, originLon, // anim start
@@ -671,7 +704,7 @@ app.put('/api/admin/shipments/:trackingNumber', authenticate, isAdmin, (req, res
         shipment_type, carrier,
         sender_name, sender_phone, sender_email, sender_address,
         receiver_name, receiver_phone, receiver_address,
-        weight, dimensions,
+        weight, dimensions, payment_method,
         current_date_time, departure_date_time, delivery_date_time, description
     } = req.body;
 
@@ -679,14 +712,14 @@ app.put('/api/admin/shipments/:trackingNumber', authenticate, isAdmin, (req, res
         shipment_type = ?, carrier = ?, 
         sender_name = ?, sender_phone = ?, sender_email = ?, sender_address = ?, 
         receiver_name = ?, receiver_phone = ?, receiver_address = ?, 
-        weight = ?, dimensions = ?, 
+        weight = ?, dimensions = ?, payment_method = ?,
         current_date_time = ?, departure_date_time = ?, delivery_date_time = ?, description = ? 
         WHERE tracking_number = ?`,
         [
             shipment_type, carrier,
             sender_name, sender_phone, sender_email, sender_address,
             receiver_name, receiver_phone, receiver_address,
-            weight, dimensions,
+            weight, dimensions, payment_method,
             current_date_time, departure_date_time, delivery_date_time, description,
             trackingNumber
         ],
