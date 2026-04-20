@@ -1056,3 +1056,4 @@ app.listen(PORT, () => {
         console.log('⚠️ Keep-alive disabled: RENDER_EXTERNAL_URL or BASE_URL not set.');
     }
 });
+module.exports = app;
