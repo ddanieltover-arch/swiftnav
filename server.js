@@ -13,12 +13,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_dev_key';
 app.use(cors());
 app.use(express.json());
 const path = require('path');
-app.use(express.static(path.join(__dirname))); // Serve frontend files
-
-// Root Route
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
+app.use(express.static(path.join(__dirname, 'public'))); // Serve frontend files from public
 
 // === Keep-Alive / Health Endpoint ===
 app.get('/api/health', (req, res) => {

@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard | SwiftNav Logistics</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .dashboard-container {
+            padding: 8rem 2rem 4rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--clr-border);
+            padding-bottom: 1rem;
+        }
+
+        .shipment-list {
+            display: grid;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .shipment-card {
+            background: var(--clr-surface);
+            border: 1px solid var(--clr-border);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+
+        .shipment-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--clr-primary);
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            background: var(--clr-secondary-light);
+            color: var(--clr-secondary);
+        }
+
+        .status-badge.delivered {
+            background: #d1fae5;
+            color: #047857;
+        }
+
+        .details-pane {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            background: white;
+            border: 1px solid var(--clr-border);
+            border-radius: var(--radius-md);
+            padding: 2rem;
+            box-shadow: var(--shadow-md);
+        }
+
+        #dashboard-map {
+            width: 100%;
+            height: 400px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--clr-border);
+        }
+
+        .timeline-container {
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 1rem;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-container {
+                padding: 6rem 1rem 2rem;
+            }
+
+            .dashboard-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1.5rem;
+            }
+
+            .dashboard-header .btn {
+                width: 100%;
+            }
+
+            .details-pane {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+                padding: 1.25rem;
+            }
+
+            .shipment-card {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .shipment-card>div:last-child {
+                text-align: left !important;
+                width: 100%;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                border-top: 1px solid var(--clr-border);
+                padding-top: 0.75rem;
+            }
+
+            #dashboard-map {
+                height: 300px;
+            }
+
+            .details-pane>div:first-child {
+                order: 2;
+            }
+
+            .details-pane>div:last-child {
+                order: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar scrolled">
+        <div class="nav-container">
+            <a href="index.html" class="brand">SwiftNav Logistics</a>
+            <div class="nav-links">
+                <a href="index.html">Home</a>
+                <button id="logout-btn" class="btn btn-secondary">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <div>
+                <h1 id="user-greeting">My Dashboard</h1>
+                <p>Manage and track your active shipments.</p>
+            </div>
+            <a href="index.html#track" class="btn btn-primary">Track New</a>
+        </div>
+
+        <div class="shipment-list" id="shipment-list">
+            <p>Loading your shipments...</p>
+        </div>
+
+        <!-- Shipment Details Section -->
+        <div id="shipment-details" class="hidden">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2 id="detail-title">Shipment Details</h2>
+                <div>
+                    <button id="more-info-btn" class="btn"
+                        style="background-color: var(--clr-primary); color: white; margin-right: 0.5rem;">More Shipping
+                        Information</button>
+                    <button id="close-details-btn" class="btn btn-secondary">Close Details</button>
+                </div>
+            </div>
+            <div class="details-pane">
+                <div class="timeline-container">
+                    <h3
+                        style="margin-bottom: 1rem; color: var(--clr-text-muted); font-size:0.875rem; text-transform:uppercase;">
+                        Tracking History</h3>
+                    <div class="tracking-timeline" id="dashboard-timeline">
+                        <!-- Timeline items injected here -->
+                        <p>Loading...</p>
+                    </div>
+                </div>
+                <div>
+                    <h3
+                        style="margin-bottom: 1rem; color: var(--clr-text-muted); font-size:0.875rem; text-transform:uppercase;">
+                        Live Map</h3>
+                    <div id="dashboard-map"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- More Shipping Information Modal (Module 21) -->
+    <div id="more-info-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 800px;">
+            <span class="close-modal" id="close-more-info">&times;</span>
+            <div class="modal-header">
+                <h2>Comprehensive Shipment Details</h2>
+                <p>Full package and routing specifications</p>
+            </div>
+
+            <div
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+                <!-- Sender Section -->
+                <div style="background: var(--clr-surface-alt); padding: 1.5rem; border-radius: var(--radius-md);">
+                    <h3
+                        style="margin-bottom: 1rem; font-size: 1rem; border-bottom: 1px solid var(--clr-border); padding-bottom: 0.5rem;">
+                        Sender Details</h3>
+                    <p><strong>Name:</strong> <span id="m-sender-name">--</span></p>
+                    <p style="margin-top: 0.5rem;"><strong>Email:</strong> <span id="m-sender-email">--</span></p>
+                    <p style="margin-top: 0.5rem;"><strong>Phone:</strong> <span id="m-sender-phone">--</span></p>
+                    <p style="margin-top: 0.5rem;"><strong>Address:</strong> <br><span id="m-sender-address">--</span>
+                    </p>
+                </div>
+
+                <!-- Receiver Section -->
+                <div style="background: var(--clr-surface-alt); padding: 1.5rem; border-radius: var(--radius-md);">
+                    <h3
+                        style="margin-bottom: 1rem; font-size: 1rem; border-bottom: 1px solid var(--clr-border); padding-bottom: 0.5rem;">
+                        Receiver Details</h3>
+                    <p><strong>Name:</strong> <span id="m-receiver-name">--</span></p>
+                    <p style="margin-top: 0.5rem;"><strong>Email:</strong> <span id="m-receiver-email">--</span></p>
+                    <p style="margin-top: 0.5rem;"><strong>Phone:</strong> <span id="m-receiver-phone">--</span></p>
+                    <p style="margin-top: 0.5rem;"><strong>Address:</strong> <br><span id="m-receiver-address">--</span>
+                    </p>
+                </div>
+
+                <!-- Package Section -->
+                <div style="background: var(--clr-surface-alt); padding: 1.5rem; border-radius: var(--radius-md);">
+                    <h3
+                        style="margin-bottom: 1rem; font-size: 1rem; border-bottom: 1px solid var(--clr-border); padding-bottom: 0.5rem;">
+                        Package Specs</h3>
+                    <p><strong>Service Type:</strong> <span id="m-service-type">--</span></p>
+                    <p style="margin-top: 0.5rem;"><strong>Courier:</strong> <span id="m-courier">--</span></p>
+                    <p style="margin-top: 0.5rem;"><strong>Weight:</strong> <span id="m-weight">--</span> kg</p>
+                    <p style="margin-top: 0.5rem;"><strong>Size (cm)*:</strong> <br><span id="m-dimensions">--</span> cm
+                    </p>
+                    <p style="margin-top: 0.5rem;"><strong>Expected Delivery:</strong> <span
+                            id="m-expected-delivery">--</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('swiftnav_token');
+            if (!token) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            document.getElementById('logout-btn').addEventListener('click', () => {
+                localStorage.removeItem('swiftnav_token');
+                localStorage.removeItem('swiftnav_role');
+                window.location.href = 'index.html';
+            });
+
+            try {
+                // Get user info
+                const userRes = await fetch('/api/auth/me', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (userRes.ok) {
+                    const userData = await userRes.json();
+                    const displayName = userData.user.name || userData.user.email.split('@')[0];
+                    document.getElementById('user-greeting').textContent = `Welcome, ${displayName}`;
+                } else {
+                    throw new Error('Unauthorized');
+                }
+
+                // Get shipments
+                const listContainer = document.getElementById('shipment-list');
+                listContainer.innerHTML = Array(3).fill(0).map(() => `
+                    <div class="shipment-card" style="pointer-events: none; border-color: transparent;">
+                        <div style="flex-grow: 1;">
+                            <div class="skeleton" style="height: 24px; width: 150px; margin-bottom: 0.5rem;"></div>
+                            <div class="skeleton" style="height: 16px; width: 220px; margin-bottom: 0.5rem;"></div>
+                            <div class="skeleton" style="height: 12px; width: 100px;"></div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div class="skeleton" style="height: 24px; width: 80px; border-radius: 999px; margin-left: auto;"></div>
+                            <div class="skeleton" style="height: 16px; width: 120px; margin-top: 1rem; margin-left: auto;"></div>
+                        </div>
+                    </div>
+                `).join('');
+
+                const shipRes = await fetch('/api/user/shipments', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (shipRes.ok) {
+                    const shipments = await shipRes.json();
+
+                    if (shipments.length === 0) {
+                        listContainer.innerHTML = '<p>You have no active shipments.</p>';
+                    } else {
+                        let html = '';
+                        shipments.forEach(ship => {
+                            const isDelivered = ship.status === 'Delivered';
+                            html += `
+                                <div class="shipment-card" onclick="viewShipmentDetails('${ship.tracking_number}')">
+                                    <div>
+                                        <h3 style="margin-bottom: 0.25rem;">${ship.tracking_number}</h3>
+                                        <p style="color: var(--clr-text-muted); font-size: 0.875rem;">
+                                            To: ${ship.receiver_name || 'N/A'} | ${ship.receiver_email || 'N/A'}
+                                        </p>
+                                        <p style="color: var(--clr-text-muted); font-size: 0.75rem; margin-top: 0.5rem;">
+                                            Created: ${new Date(ship.created_at).toLocaleDateString()}
+                                        </p>
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <span class="status-badge ${isDelivered ? 'delivered' : ''}">${ship.status}</span>
+                                        <br>
+                                        <button style="margin-top: 1rem; cursor:pointer; background:none; border:none; color:var(--clr-primary); font-weight:600;">View Live Tracking &rarr;</button>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        listContainer.innerHTML = html;
+                    }
+                }
+            } catch (err) {
+                console.error(err);
+                if (err.message === 'Unauthorized') {
+                    localStorage.removeItem('swiftnav_token');
+                    window.location.href = 'index.html';
+                } else {
+                    const listContainer = document.getElementById('shipment-list');
+                    if (listContainer) {
+                        listContainer.innerHTML = '<p style="color: #ef4444;">Failed to load shipments. Please try again later.</p>';
+                    }
+                }
+            }
+        });
+
+        // Global map vars
+        let map = null;
+        let mapMarker = null;
+        let mapPolyline = null;
+        let historicalMarkers = [];
+
+        // Global animation state
+        let animationFrameId = null;
+        let activeMarker = null;
+
+        async function viewShipmentDetails(trackingNumber) {
+            // Cancel any previous animation
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+
+            document.getElementById('shipment-list').classList.add('hidden');
+            const detailsSection = document.getElementById('shipment-details');
+            detailsSection.classList.remove('hidden');
+
+            document.getElementById('detail-title').textContent = `Shipment: ${trackingNumber}`;
+            const timeline = document.getElementById('dashboard-timeline');
+            timeline.innerHTML = Array(4).fill(0).map(() => `
+                <div style="margin-bottom: 1.5rem; display: flex; gap: 15px;">
+                    <div class="skeleton" style="width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; margin-top: 5px;"></div>
+                    <div style="flex-grow: 1;">
+                        <div class="skeleton" style="height: 16px; width: 140px; margin-bottom: 8px;"></div>
+                        <div class="skeleton" style="height: 14px; width: 200px;"></div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Initialize Map if not already
+            if (!map) {
+                map = L.map('dashboard-map', { scrollWheelZoom: false }).setView([40.7128, -74.0060], 4);
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                    maxZoom: 20,
+                    attribution: '&copy; OpenStreetMap'
+                }).addTo(map);
+            }
+            // Must call invalidateSize after the container transitions from hidden to visible
+            setTimeout(() => { map.invalidateSize(); }, 200);
+
+            try {
+                const res = await fetch(`/api/track/${trackingNumber}`);
+                const data = await res.json();
+
+                if (!res.ok || !data.shipment) {
+                    console.error('Shipment not found or API error:', data);
+                    timeline.innerHTML = '<p>No history available.</p>';
+                    return;
+                }
+
+                const s = data.shipment;
+                // Populate Module 21 Modal Data (Omitted for brevity, assumed same)
+                populateModal(s);
+
+                // Clear previous map layers
+                if (mapPolyline) { map.removeLayer(mapPolyline); mapPolyline = null; }
+                if (mapMarker) { map.removeLayer(mapMarker); mapMarker = null; }
+                historicalMarkers.forEach(m => map.removeLayer(m));
+                historicalMarkers = [];
+
+                // Update Timeline
+                timeline.innerHTML = '';
+                const routeCoords = [];
+
+                if (data.events && data.events.length > 0) {
+                    const htmlEvents = [];
+                    data.events.forEach((event, i) => {
+                        const isLast = i === data.events.length - 1;
+                        let statusClass = (isLast && event.status_marker !== 'Delivered') ? 'active' : 'completed';
+
+                        htmlEvents.push(`
+                            <div class="timeline-item ${statusClass}" style="margin-bottom: 1.5rem; position:relative; padding-left: 2rem; border-left: 2px solid ${statusClass === 'active' ? 'var(--clr-primary)' : 'var(--clr-border)'}">
+                                <div style="position:absolute; left:-6px; top:0; width:10px; height:10px; border-radius:50%; background:${statusClass === 'active' ? 'var(--clr-primary)' : 'var(--clr-border)'}"></div>
+                                <h4 style="margin:0; font-size:1rem; color:var(--clr-text);">${event.status_marker}</h4>
+                                <p style="margin:0.25rem 0; font-size:0.875rem; color:var(--clr-text-muted);">${event.location} - ${event.description}</p>
+                                <span style="font-size:0.75rem; color:var(--clr-text-muted);">${new Date(event.timestamp).toLocaleString()}</span>
+                            </div>
+                        `);
+
+                        // Use pre-geocoded coordinates if available
+                        if (event.lat && event.lng) {
+                            const coords = [event.lat, event.lng];
+                            routeCoords.push(coords);
+
+                            if (i === 0) {
+                                const originIcon = L.divIcon({
+                                    className: 'custom-map-marker',
+                                    html: `<div style="background-color:#22c55e; width:16px; height:16px; border-radius:50%; border:2px solid white; box-shadow:0 0 8px rgba(34,197,94,0.6);"></div>`,
+                                    iconSize: [16, 16],
+                                    iconAnchor: [8, 8]
+                                });
+                                historicalMarkers.push(L.marker(coords, { icon: originIcon }).addTo(map));
+                            } else if (!isLast) {
+                                historicalMarkers.push(L.circleMarker(coords, {
+                                    radius: 5, fillColor: "#9ca3af", color: "#ffffff", weight: 2, opacity: 1, fillOpacity: 0.8
+                                }).addTo(map));
+                            }
+                        }
+                    });
+
+                    timeline.innerHTML = htmlEvents.join('');
+
+                    // Draw Route
+                    if (routeCoords.length > 1) {
+                        mapPolyline = L.polyline(routeCoords, {
+                            color: '#1e3a8a', weight: 3, opacity: 0.5, dashArray: '5, 5'
+                        }).addTo(map);
+                    }
+
+                    // --- Animation Implementation ---
+                    const startLat = s.anim_start_lat || s.current_lat;
+                    const startLng = s.anim_start_lng || s.current_lng;
+                    const targetLat = s.anim_target_lat || s.current_lat;
+                    const targetLng = s.anim_target_lng || s.current_lng;
+                    const startTime = new Date(s.anim_start_time || s.created_at).getTime();
+                    const targetTime = new Date(s.anim_target_time || s.created_at).getTime();
+
+                    const customIcon = L.divIcon({
+                        className: 'custom-map-marker',
+                        html: `<div class="heartbeat-marker"></div>`,
+                        iconSize: [20, 20], iconAnchor: [10, 10]
+                    });
+
+                    mapMarker = L.marker([startLat, startLng], { icon: customIcon }).addTo(map);
+                    mapMarker.bindPopup(`<strong>Shipment Update</strong><br>${s.status}`).openPopup();
+
+                    function animateMarker() {
+                        const now = Date.now();
+                        let progress = 1;
+
+                        if (targetTime > startTime) {
+                            progress = (now - startTime) / (targetTime - startTime);
+                            progress = Math.max(0, Math.min(1, progress));
+                        }
+
+                        const currentLat = startLat + (targetLat - startLat) * progress;
+                        const currentLng = startLng + (targetLng - startLng) * progress;
+
+                        mapMarker.setLatLng([currentLat, currentLng]);
+
+                        if (progress < 1) {
+                            animationFrameId = requestAnimationFrame(animateMarker);
+                        } else {
+                            animationFrameId = null;
+                        }
+                    }
+
+                    animateMarker();
+
+                    // Map fit bounds
+                    const group = new L.featureGroup([mapMarker, ...historicalMarkers]);
+                    if (mapPolyline) group.addLayer(mapPolyline);
+                    setTimeout(() => {
+                        map.fitBounds(group.getBounds(), { padding: [50, 50], maxZoom: 12 });
+                    }, 500);
+
+                } else {
+                    timeline.innerHTML = '<p>No history available.</p>';
+                }
+
+            } catch (err) {
+                console.error('viewShipmentDetails error:', err);
+                timeline.innerHTML = '<p>Error fetching shipment details.</p>';
+            }
+        }
+
+        function populateModal(s) {
+            document.getElementById('m-sender-name').textContent = s.sender_name || 'N/A';
+            document.getElementById('m-sender-email').textContent = s.sender_email || 'N/A';
+            document.getElementById('m-sender-phone').textContent = s.sender_phone || 'N/A';
+            document.getElementById('m-sender-address').textContent = s.sender_address || 'N/A';
+            document.getElementById('m-receiver-name').textContent = s.receiver_name || 'N/A';
+            document.getElementById('m-receiver-email').textContent = s.receiver_email || 'N/A';
+            document.getElementById('m-receiver-phone').textContent = s.receiver_phone || 'N/A';
+            document.getElementById('m-receiver-address').textContent = s.receiver_address || 'N/A';
+            document.getElementById('m-service-type').textContent = s.shipment_type || 'N/A';
+            document.getElementById('m-courier').textContent = s.carrier || 'N/A';
+            document.getElementById('m-weight').textContent = s.weight || '0';
+            document.getElementById('m-dimensions').textContent = s.dimensions || '0 × 0 × 0';
+
+            const deliveryDate = s.delivery_date_time;
+            if (deliveryDate) {
+                try {
+                    const dateObj = new Date(deliveryDate);
+                    const humanString = dateObj.toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                    const humanTime = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    document.getElementById('m-expected-delivery').textContent = `${humanString} at ${humanTime}`;
+                } catch (e) { document.getElementById('m-expected-delivery').textContent = 'Invalid Date'; }
+            } else {
+                document.getElementById('m-expected-delivery').textContent = 'Pending';
+            }
+        }
+        document.getElementById('close-details-btn').addEventListener('click', () => {
+            document.getElementById('shipment-details').classList.add('hidden');
+            document.getElementById('shipment-list').classList.remove('hidden');
+        });
+
+        // Module 21: More Info Modal Listeners
+        document.getElementById('more-info-btn').addEventListener('click', () => {
+            document.getElementById('more-info-modal').classList.remove('hidden');
+        });
+        document.getElementById('close-more-info').addEventListener('click', () => {
+            document.getElementById('more-info-modal').classList.add('hidden');
+        });
+        window.addEventListener('click', (e) => {
+            if (e.target === document.getElementById('more-info-modal')) {
+                document.getElementById('more-info-modal').classList.add('hidden');
+            }
+        });
+    </script>
+    <script src="global.js"></script>
+</body>
+
+</html>
