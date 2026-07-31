@@ -86,8 +86,14 @@ app.get('/api/geocode', async (req, res) => {
 });
 
 // === Email Setup (Resend API) ===
-const resend = new Resend(process.env.RESEND_API_KEY || 're_cybDpLh4_Jha2VaMmVoYk5eMH9z77UGL1');
-console.log('✅ Resend Email API initialized.');
+const resend = new Resend(process.env.RESEND_API_KEY);
+// ADMIN_EMAIL is the only inbox for admin/form notifications.
+// Do NOT use EMAIL_USER here — that is legacy SMTP login and may be a personal mailbox.
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'info@swiftnavlog.com';
+const EMAIL_FROM = process.env.EMAIL_FROM && /swiftnavlog\.com/i.test(process.env.EMAIL_FROM)
+    ? process.env.EMAIL_FROM
+    : 'SwiftNav Logistics <info@swiftnavlog.com>';
+console.log(`✅ Resend Email API initialized. Admin notifications → ${ADMIN_EMAIL}`);
 
 // === Twilio SMS Setup ===
 let twilioClient = null;
@@ -224,7 +230,7 @@ app.post('/api/auth/register', async (req, res) => {
             `);
 
             resend.emails.send({
-                from: process.env.EMAIL_FROM || 'SwiftNav Logistics <info@swiftnavlog.com>',
+                from: EMAIL_FROM,
                 to: email,
                 subject: '🎉 Welcome to SwiftNav Logistics — Your Account is Ready!',
                 html: welcomeRegHtml
@@ -293,7 +299,7 @@ app.post('/api/auth/forgot-password', (req, res) => {
             `);
 
             resend.emails.send({
-                from: process.env.EMAIL_FROM || 'SwiftNav Logistics <info@swiftnavlog.com>',
+                from: EMAIL_FROM,
                 to: email,
                 subject: '🔐 Password Reset Code - SwiftNav Logistics',
                 html: resetHtml
@@ -616,7 +622,7 @@ app.post('/api/admin/shipments', authenticate, isAdmin, (req, res) => {
                     `;
 
                     resend.emails.send({
-                        from: process.env.EMAIL_FROM || 'SwiftNav Logistics <info@swiftnavlog.com>',
+                        from: EMAIL_FROM,
                         to: user_email,
                         subject: `Your Shipment ${trackingNumber} Has Been Created — SwiftNav Logistics`,
                         html: welcomeHtml
@@ -673,7 +679,7 @@ app.post('/api/admin/shipments', authenticate, isAdmin, (req, res) => {
                     `;
 
                     resend.emails.send({
-                        from: process.env.EMAIL_FROM || 'SwiftNav Logistics <info@swiftnavlog.com>',
+                        from: EMAIL_FROM,
                         to: sender_email,
                         subject: `Shipment Confirmation: ${trackingNumber} — SwiftNav Logistics`,
                         html: senderHtml
@@ -827,18 +833,20 @@ app.post('/api/admin/shipments/:trackingNumber/events', authenticate, isAdmin, a
                     ]
                 );
 
-                // Try to send email notification
-                db.get(`SELECT s.*, u.email as user_email, u.name as user_name FROM Shipments s 
+                // Notify only the shipment client (receiver), never admin/personal SMTP inboxes
+                db.get(`SELECT s.*, u.email as account_email, u.name as user_name FROM Shipments s 
                     LEFT JOIN Users u ON s.user_id = u.id 
                     WHERE s.tracking_number = ?`, [trackingNumber], async (err, shipmentInfo) => {
 
-                    if (shipmentInfo && shipmentInfo.user_email) {
+                    const clientEmail = (shipmentInfo && (shipmentInfo.receiver_email || shipmentInfo.account_email || '').trim()) || '';
+                    if (shipmentInfo && clientEmail) {
                         try {
                             const statusColor = status_marker === 'Delivered' ? '#22c55e' : (status_marker === 'In Transit' ? '#3b82f6' : '#f59e0b');
                             const statusIcon = status_marker === 'Delivered' ? '✅' : (status_marker === 'In Transit' ? '🚚' : '📋');
                             const updateBaseUrl = process.env.BASE_URL || 'https://swiftnavlog.com';
+                            const clientName = shipmentInfo.receiver_name || shipmentInfo.user_name || 'Valued Customer';
                             const updateHtml = buildEmailTemplate('Shipment Update', `${statusIcon} ${status_marker}`, `
-                            <p style="font-size: 16px; color: #374151;">Hello <strong>${shipmentInfo.user_name || 'Valued Customer'}</strong>,</p>
+                            <p style="font-size: 16px; color: #374151;">Hello <strong>${clientName}</strong>,</p>
                             <p style="color: #4b5563;">There's a new update on your shipment:</p>
                             
                             <div style="background: #f0f9ff; border: 2px solid #1e3a8a; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center;">
@@ -860,13 +868,13 @@ app.post('/api/admin/shipments/:trackingNumber/events', authenticate, isAdmin, a
                                 <a href="${updateBaseUrl}" style="display: inline-block; background: linear-gradient(135deg, #1e3a8a, #1e40af); color: #ffffff; text-decoration: none; padding: 14px 35px; border-radius: 8px; font-weight: 600; font-size: 15px;">🔍 Track Your Shipment Live</a>
                             </div>
                         `);
-                            const info = await resend.emails.send({
-                                from: process.env.EMAIL_FROM || 'SwiftNav Logistics <info@swiftnavlog.com>',
-                                to: shipmentInfo.user_email,
+                            await resend.emails.send({
+                                from: EMAIL_FROM,
+                                to: clientEmail,
                                 subject: `${statusIcon} Shipment Update: ${trackingNumber} — ${status_marker}`,
                                 html: updateHtml
                             });
-                            console.log(`✅ Email sent for ${trackingNumber} to ${shipmentInfo.user_email}`);
+                            console.log(`✅ Email sent for ${trackingNumber} to ${clientEmail}`);
                         } catch (emailErr) {
                             console.error('Failed to send email:', emailErr);
                         }
@@ -1007,23 +1015,24 @@ app.post('/api/contact', async (req, res) => {
     `);
 
     try {
+        // Admin notification — only to ADMIN_EMAIL (never EMAIL_USER / personal SMTP login)
         await resend.emails.send({
-            from: process.env.EMAIL_FROM || 'SwiftNav Logistics <info@swiftnavlog.com>',
-            to: process.env.EMAIL_USER || 'info@swiftnavlog.com',
+            from: EMAIL_FROM,
+            to: ADMIN_EMAIL,
             replyTo: email,
             subject: `📬 New Contact Request from ${name}`,
             html: adminHtml
         });
 
-        // Send confirmation to the customer
+        // Confirmation — only to the client who submitted the form
         await resend.emails.send({
-            from: process.env.EMAIL_FROM || 'SwiftNav Logistics <info@swiftnavlog.com>',
+            from: EMAIL_FROM,
             to: email,
             subject: '✅ We received your message — SwiftNav Logistics',
             html: customerHtml
         });
 
-        console.log(`✅ Contact form email sent from ${email}`);
+        console.log(`✅ Contact form emails sent → admin: ${ADMIN_EMAIL}, client: ${email}`);
     } catch (emailErr) {
         console.error('Contact email error:', emailErr);
     }
