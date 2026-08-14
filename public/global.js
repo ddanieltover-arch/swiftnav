@@ -141,6 +141,9 @@
             [data-theme="dark"] .orders-table td { border-color: #334155 !important; }
             [data-theme="dark"] .stat-card { background: #1e293b !important; border-color: #334155 !important; }
             [data-theme="dark"] .footer { background: #020617; }
+            [data-theme="dark"] #whatsapp-fab-menu { background: #1e293b; }
+            [data-theme="dark"] #whatsapp-fab-menu a { color: #f1f5f9; }
+            [data-theme="dark"] #whatsapp-fab-menu a:hover { background: #14532d; }
             [data-theme="dark"] .hero { background: linear-gradient(135deg, #0c1a42 0%, #020617 100%) !important; }
             [data-theme="dark"] #page-fade-overlay { background: #0f172a; }
         `;
@@ -192,7 +195,7 @@
     backToTopBtn.innerHTML = '↑';
     backToTopBtn.title = 'Back to top';
     backToTopBtn.style.cssText = `
-        position: fixed; bottom: 1.5rem; left: 1.5rem; z-index: 9999;
+        position: fixed; bottom: 1.7rem; left: 5.15rem; z-index: 9999;
         width: 44px; height: 44px; border-radius: 50%;
         background: var(--clr-secondary); color: white;
         border: none; font-size: 1.2rem; cursor: pointer;
@@ -213,5 +216,50 @@
     backToTopBtn.addEventListener('click', () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     });
+
+
+    /* =============================================
+     * WHATSAPP FLOATING BUTTON (brand colors)
+     * ============================================= */
+    const waIcon = `<img src="img/whatsapp.svg" alt="" width="52" height="52">`;
+
+    if (/admin\.html|dashboard\.html$/i.test(window.location.pathname)) {
+        return;
+    }
+
+    const waFab = document.createElement('div');
+    waFab.id = 'whatsapp-fab';
+    waFab.innerHTML = `
+        <div id="whatsapp-fab-menu" role="menu">
+            <a href="https://wa.me/61468108169" target="_blank" rel="noopener noreferrer" role="menuitem">
+                <span class="whatsapp-icon"></span>
+                <span>
+                    <span class="wa-label">WhatsApp only</span>
+                    <span class="wa-number">+61 468 108 169</span>
+                </span>
+            </a>
+            <a href="https://wa.me/17202557334" target="_blank" rel="noopener noreferrer" role="menuitem">
+                <span class="whatsapp-icon"></span>
+                <span>
+                    <span class="wa-label">USA WhatsApp</span>
+                    <span class="wa-number">+1 (720) 255-7334</span>
+                </span>
+            </a>
+        </div>
+        <button type="button" id="whatsapp-fab-btn" aria-label="Chat on WhatsApp" aria-expanded="false">${waIcon}</button>
+    `;
+    document.body.appendChild(waFab);
+
+    const waBtn = waFab.querySelector('#whatsapp-fab-btn');
+    waBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const open = waFab.classList.toggle('open');
+        waBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    document.addEventListener('click', () => {
+        waFab.classList.remove('open');
+        waBtn.setAttribute('aria-expanded', 'false');
+    });
+    waFab.addEventListener('click', (e) => e.stopPropagation());
 
 })();
