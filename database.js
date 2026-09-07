@@ -1,12 +1,11 @@
 const { Pool } = require('pg');
-const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const bcrypt = require('bcrypt');
 const fs = require('fs');
 
 const dbURL = process.env.DATABASE_URL;
-// Force PostgreSQL in production; default to SQLite only for local development.
-const isProd = process.env.NODE_ENV === 'production';
+// Force PostgreSQL in production / on Vercel; SQLite only for local development.
+const isProd = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
 const isLocal = !isProd;
 
 // Log for debugging
@@ -18,8 +17,9 @@ let db;
 if (isProd) {
     if (!dbURL || !dbURL.startsWith('postgres')) {
         console.error('❌ CRITICAL ERROR: DATABASE_URL is missing or invalid in production mode.');
-        console.error('💡 SQLite cannot be used in production as it resets on every redeploy.');
-        process.exit(1); // Stop the server to prevent data loss/confusion
+        console.error('💡 Set DATABASE_URL (Postgres) in Vercel env vars — SQLite cannot persist on serverless.');
+        // Do not process.exit on Vercel (opaque failures); throw so the function returns a clear 500
+        throw new Error('DATABASE_URL must be a Postgres connection string in production');
     }
     
     console.log('🌐 Using PostgreSQL (Production Mode)');
@@ -88,6 +88,8 @@ if (isProd) {
     };
 } else {
     console.log('🏠 Using SQLite (Local Development Mode)');
+    // Lazy-load sqlite3 so Vercel production never loads the native module
+    const sqlite3 = require('sqlite3').verbose();
     const dbPath = path.join(__dirname, 'database.sqlite');
     const sqliteDb = new sqlite3.Database(dbPath);
 

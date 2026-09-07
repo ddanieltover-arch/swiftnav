@@ -261,19 +261,31 @@ app.post('/api/auth/register', async (req, res) => {
 });
 
 app.post('/api/auth/login', (req, res) => {
-    const { email, password } = req.body;
-    db.get(`SELECT * FROM Users WHERE email = ?`, [email.toLowerCase()], async (err, user) => {
-        if (err) {
-            console.error('❌ LOGIN DB ERROR:', err.message);
-            return res.status(500).json({ message: 'Database error', detail: err.message });
+    const { email, password } = req.body || {};
+    if (!email || !password) {
+        return res.status(400).json({ message: 'Email and password are required' });
+    }
+
+    db.get(`SELECT * FROM Users WHERE email = ?`, [String(email).toLowerCase().trim()], async (err, user) => {
+        try {
+            if (err) {
+                console.error('❌ LOGIN DB ERROR:', err.message);
+                return res.status(500).json({ message: 'Database error', detail: err.message });
+            }
+            if (!user) return res.status(400).json({ message: 'Invalid email or password' });
+            if (!user.password_hash) {
+                return res.status(500).json({ message: 'Account misconfigured' });
+            }
+
+            const validPassword = await bcrypt.compare(password, user.password_hash);
+            if (!validPassword) return res.status(400).json({ message: 'Invalid email or password' });
+
+            const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '1d' });
+            res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
+        } catch (loginErr) {
+            console.error('❌ LOGIN ERROR:', loginErr);
+            res.status(500).json({ message: 'Server error' });
         }
-        if (!user) return res.status(400).json({ message: 'Invalid email or password' });
-
-        const validPassword = await bcrypt.compare(password, user.password_hash);
-        if (!validPassword) return res.status(400).json({ message: 'Invalid email or password' });
-
-        const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '1d' });
-        res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
     });
 });
 
@@ -1053,30 +1065,34 @@ app.post('/api/contact', async (req, res) => {
     res.status(200).json({ message: 'Your message has been sent successfully! We will get back to you shortly.' });
 });
 
-app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
+// Listen only when run directly (local / Render). On Vercel, api/index.js exports the app.
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`🚀 Server running on port ${PORT}`);
 
-    // === Self-Ping Keep-Alive (Render/DB sleep prevention) ===
-    const EXTERNAL_URL = process.env.RENDER_EXTERNAL_URL || process.env.BASE_URL;
-    if (EXTERNAL_URL) {
-        console.log(`📡 Keep-alive pings enabled for: ${EXTERNAL_URL}`);
-        setInterval(async () => {
-            try {
-                const https = require('https');
-                const http = require('http');
-                const protocol = EXTERNAL_URL.startsWith('https') ? https : http;
+        // === Self-Ping Keep-Alive (Render/DB sleep prevention) ===
+        const EXTERNAL_URL = process.env.RENDER_EXTERNAL_URL || process.env.BASE_URL;
+        if (EXTERNAL_URL) {
+            console.log(`📡 Keep-alive pings enabled for: ${EXTERNAL_URL}`);
+            setInterval(async () => {
+                try {
+                    const https = require('https');
+                    const http = require('http');
+                    const protocol = EXTERNAL_URL.startsWith('https') ? https : http;
 
-                protocol.get(`${EXTERNAL_URL}/api/health`, (res) => {
-                    console.log(`💓 Keep-alive ping: ${res.statusCode}`);
-                }).on('error', (err) => {
-                    console.error('💓 Keep-alive error:', err.message);
-                });
-            } catch (err) {
-                console.error('💓 Keep-alive loop failed:', err.message);
-            }
-        }, 10 * 60 * 1000); // Every 10 minutes
-    } else {
-        console.log('⚠️ Keep-alive disabled: RENDER_EXTERNAL_URL or BASE_URL not set.');
-    }
-});
+                    protocol.get(`${EXTERNAL_URL}/api/health`, (res) => {
+                        console.log(`💓 Keep-alive ping: ${res.statusCode}`);
+                    }).on('error', (err) => {
+                        console.error('💓 Keep-alive error:', err.message);
+                    });
+                } catch (err) {
+                    console.error('💓 Keep-alive loop failed:', err.message);
+                }
+            }, 10 * 60 * 1000); // Every 10 minutes
+        } else {
+            console.log('⚠️ Keep-alive disabled: RENDER_EXTERNAL_URL or BASE_URL not set.');
+        }
+    });
+}
+
 module.exports = app;
