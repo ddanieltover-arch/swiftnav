@@ -36,7 +36,7 @@ async function geocodeLocation(q) {
             }
         }, 5000); // 5 second timeout for external API
 
-        https.get(url, { headers: { 'User-Agent': 'SwiftNavLogisticsApp/1.1' } }, (resp) => {
+        https.get(url, { headers: { 'User-Agent': 'DemarsInternationalApp/1.1' } }, (resp) => {
             let data = '';
             resp.on('data', (chunk) => { data += chunk; });
             resp.on('end', async () => {
@@ -86,14 +86,27 @@ app.get('/api/geocode', async (req, res) => {
 });
 
 // === Email Setup (Resend API) ===
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = process.env.RESEND_API_KEY
+    ? new Resend(process.env.RESEND_API_KEY)
+    : {
+        emails: {
+            send: async (options) => {
+                console.log(`⚠️  Resend: No RESEND_API_KEY configured. Simulated sending to: ${options?.to}`);
+                return { data: { id: 'mock_id' }, error: null };
+            }
+        }
+    };
 // ADMIN_EMAIL is the only inbox for admin/form notifications.
 // Do NOT use EMAIL_USER here — that is legacy SMTP login and may be a personal mailbox.
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'info@swiftnavlog.com';
-const EMAIL_FROM = process.env.EMAIL_FROM && /swiftnavlog\.com/i.test(process.env.EMAIL_FROM)
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'info@demarsint.com';
+const EMAIL_FROM = process.env.EMAIL_FROM && /demarsint\.com/i.test(process.env.EMAIL_FROM)
     ? process.env.EMAIL_FROM
-    : 'SwiftNav Logistics <info@swiftnavlog.com>';
-console.log(`✅ Resend Email API initialized. Admin notifications → ${ADMIN_EMAIL}`);
+    : 'Demars International <info@demarsint.com>';
+if (process.env.RESEND_API_KEY) {
+    console.log(`✅ Resend Email API initialized. Admin notifications → ${ADMIN_EMAIL}`);
+} else {
+    console.log(`⚠️  No RESEND_API_KEY in .env — email notifications simulated. Admin notifications → ${ADMIN_EMAIL}`);
+}
 
 // === Twilio SMS Setup ===
 let twilioClient = null;
@@ -132,18 +145,18 @@ async function sendSMS(to, body) {
 
 // === Reusable Email Template Builder ===
 function buildEmailTemplate(headerTitle, headerSubtitle, bodyContent) {
-    const baseUrl = process.env.BASE_URL || 'https://swiftnavlog.com';
+    const baseUrl = process.env.BASE_URL || 'http://demarsint.com';
     return `
         <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
-            <div style="background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
-                <h1 style="color: #ffffff; margin: 0; font-size: 24px;">📦 SwiftNav Logistics</h1>
-                <p style="color: #93c5fd; margin: 8px 0 0;">${headerSubtitle}</p>
+            <div style="background: linear-gradient(135deg, #0B2545 0%, #051326 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0; border-bottom: 2px solid #C5A059;">
+                <h1 style="color: #ffffff; margin: 0; font-size: 24px; letter-spacing: 1px;">Demars International</h1>
+                <p style="color: #E5C158; margin: 8px 0 0; font-weight: 500;">${headerSubtitle}</p>
             </div>
             <div style="padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px;">
                 ${bodyContent}
                 <p style="color: #6b7280; font-size: 13px; margin-top: 25px; text-align: center; border-top: 1px solid #e5e7eb; padding-top: 15px;">
-                    If you have any questions, reply to this email or visit our <a href="${baseUrl}/contact.html" style="color: #1e40af;">Contact Page</a>.<br>
-                    Thank you for choosing <strong>SwiftNav Logistics</strong>! 🚀
+                    If you have any questions, reply to this email or visit our <a href="${baseUrl}/contact.html" style="color: #0B2545; font-weight: 600;">Contact Page</a>.<br>
+                    Thank you for choosing <strong>Demars International</strong>! 🌐
                 </p>
             </div>
         </div>
@@ -191,13 +204,13 @@ app.post('/api/auth/register', async (req, res) => {
             }
 
             // Send welcome email with credentials and security notice
-            const baseUrl = process.env.BASE_URL || 'https://swiftnavlog.com';
+            const baseUrl = process.env.BASE_URL || 'http://demarsint.com';
             const welcomeRegHtml = buildEmailTemplate('Welcome Aboard!', 'Your Account Has Been Created', `
                 <p style="font-size: 16px; color: #374151;">Hello <strong>${name}</strong>,</p>
-                <p style="color: #4b5563;">Welcome to <strong>SwiftNav Logistics</strong>! Your account has been successfully created. Here are your login credentials:</p>
+                <p style="color: #4b5563;">Welcome to <strong>Demars International</strong>! Your account has been successfully created. Here are your login credentials:</p>
                 
-                <div style="background: #f0f9ff; border: 2px solid #1e3a8a; border-radius: 8px; padding: 25px; margin: 20px 0;">
-                    <h3 style="margin: 0 0 15px; color: #1e3a8a; font-size: 16px; text-align: center;">🔑 Your Login Credentials</h3>
+                <div style="background: #f8fafc; border: 2px solid #0B2545; border-radius: 8px; padding: 25px; margin: 20px 0;">
+                    <h3 style="margin: 0 0 15px; color: #0B2545; font-size: 16px; text-align: center;">🔑 Your Login Credentials</h3>
                     <table style="width: 100%; border-collapse: collapse;">
                         <tr><td style="padding: 10px 0; color: #6b7280; width: 30%;">📧 Email:</td><td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${email}</td></tr>
                         <tr><td style="padding: 10px 0; color: #6b7280;">🔒 Password:</td><td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${password}</td></tr>
@@ -208,14 +221,14 @@ app.post('/api/auth/register', async (req, res) => {
                     <h3 style="margin: 0 0 10px; color: #991b1b; font-size: 15px;">🛡️ Security Notice</h3>
                     <ul style="margin: 0; padding-left: 18px; color: #991b1b; font-size: 14px; line-height: 1.8;">
                         <li><strong>Never share</strong> your login credentials with anyone.</li>
-                        <li>SwiftNav Logistics will <strong>never ask</strong> for your password via email, phone, or chat.</li>
+                        <li>Demars International will <strong>never ask</strong> for your password via email, phone, or chat.</li>
                         <li>We recommend changing your password after your first login.</li>
                         <li>If you suspect unauthorized access, reset your password immediately.</li>
                     </ul>
                 </div>
 
                 <div style="text-align: center; margin: 25px 0;">
-                    <a href="${baseUrl}" style="display: inline-block; background: linear-gradient(135deg, #1e3a8a, #1e40af); color: #ffffff; text-decoration: none; padding: 14px 35px; border-radius: 8px; font-weight: 600; font-size: 15px;">🚀 Go to Your Dashboard</a>
+                    <a href="${baseUrl}" style="display: inline-block; background: linear-gradient(135deg, #0B2545, #051326); border: 1px solid #C5A059; color: #ffffff; text-decoration: none; padding: 14px 35px; border-radius: 8px; font-weight: 600; font-size: 15px;">🌐 Go to Your Dashboard</a>
                 </div>
 
                 <div style="background: #f0fdf4; border-left: 4px solid #22c55e; padding: 15px; border-radius: 4px; margin: 20px 0;">
@@ -232,7 +245,7 @@ app.post('/api/auth/register', async (req, res) => {
             resend.emails.send({
                 from: EMAIL_FROM,
                 to: email,
-                subject: '🎉 Welcome to SwiftNav Logistics — Your Account is Ready!',
+                subject: '🎉 Welcome to Demars International — Your Account is Ready!',
                 html: welcomeRegHtml
             }).then(() => {
                 console.log(`✅ Welcome email sent to ${email}`);
@@ -286,11 +299,11 @@ app.post('/api/auth/forgot-password', (req, res) => {
 
             const resetHtml = buildEmailTemplate('Password Reset', 'Security Code Request', `
                 <p style="font-size: 16px; color: #374151;">Hello,</p>
-                <p style="color: #4b5563;">We received a request to reset the password associated with your SwiftNav Logistics account.</p>
+                <p style="color: #4b5563;">We received a request to reset the password associated with your Demars International account.</p>
                 
-                <div style="background: #f0f9ff; border: 2px solid #1e3a8a; border-radius: 8px; padding: 25px; margin: 20px 0; text-align: center;">
+                <div style="background: #f8fafc; border: 2px solid #0B2545; border-radius: 8px; padding: 25px; margin: 20px 0; text-align: center;">
                     <p style="margin: 0 0 5px; color: #6b7280; font-size: 13px; text-transform: uppercase; letter-spacing: 1px;">Your Reset Code</p>
-                    <h2 style="margin: 0; color: #1e3a8a; font-size: 36px; letter-spacing: 6px; font-weight: 700;">${code}</h2>
+                    <h2 style="margin: 0; color: #0B2545; font-size: 36px; letter-spacing: 6px; font-weight: 700;">${code}</h2>
                 </div>
 
                 <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 15px; border-radius: 4px; margin: 20px 0;">
@@ -301,7 +314,7 @@ app.post('/api/auth/forgot-password', (req, res) => {
             resend.emails.send({
                 from: EMAIL_FROM,
                 to: email,
-                subject: '🔐 Password Reset Code - SwiftNav Logistics',
+                subject: '🔐 Password Reset Code — Demars International',
                 html: resetHtml
             }).catch(err => console.error("Forgot PWD email error:", err));
 
@@ -525,7 +538,7 @@ app.post('/api/admin/shipments', authenticate, isAdmin, (req, res) => {
 
     // Generate random tracking number
     const randomHex = require('crypto').randomBytes(5).toString('hex').toUpperCase();
-    const trackingNumber = `SN${randomHex}`;
+    const trackingNumber = `DMI${randomHex}`;
     const initialStatus = 'Pending';
 
     const createShipment = async (userId) => {
@@ -569,20 +582,20 @@ app.post('/api/admin/shipments', authenticate, isAdmin, (req, res) => {
 
                 // Send welcome email to the receiver with tracking info
                 if (user_email) {
-                    const baseUrl = process.env.BASE_URL || 'https://swiftnavlog.com';
+                    const baseUrl = process.env.BASE_URL || 'http://demarsint.com';
                     const welcomeHtml = `
                         <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
-                            <div style="background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
-                                <h1 style="color: #ffffff; margin: 0; font-size: 24px;">📦 SwiftNav Logistics</h1>
-                                <p style="color: #93c5fd; margin: 8px 0 0;">Your Shipment Has Been Created!</p>
+                            <div style="background: linear-gradient(135deg, #0B2545 0%, #051326 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0; border-bottom: 2px solid #C5A059;">
+                                <h1 style="color: #ffffff; margin: 0; font-size: 24px; letter-spacing: 1px;">Demars International</h1>
+                                <p style="color: #E5C158; margin: 8px 0 0; font-weight: 500;">Your Shipment Has Been Created!</p>
                             </div>
                             <div style="padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px;">
                                 <p style="font-size: 16px; color: #374151;">Hello <strong>${receiver_name || 'Valued Customer'}</strong>,</p>
                                 <p style="color: #4b5563;">A new shipment has been created for you. Here are your details:</p>
                                 
-                                <div style="background: #f0f9ff; border: 2px solid #1e3a8a; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center;">
+                                <div style="background: #f8fafc; border: 2px solid #0B2545; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center;">
                                     <p style="margin: 0 0 5px; color: #6b7280; font-size: 13px; text-transform: uppercase; letter-spacing: 1px;">Your Tracking Number</p>
-                                    <h2 style="margin: 0; color: #1e3a8a; font-size: 28px; letter-spacing: 2px;">${trackingNumber}</h2>
+                                    <h2 style="margin: 0; color: #0B2545; font-size: 28px; letter-spacing: 2px;">${trackingNumber}</h2>
                                 </div>
 
                                 <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
@@ -597,7 +610,7 @@ app.post('/api/admin/shipments', authenticate, isAdmin, (req, res) => {
                                 <div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; border-radius: 4px; margin: 20px 0;">
                                     <h3 style="margin: 0 0 10px; color: #92400e; font-size: 15px;">📋 How to Track Your Package</h3>
                                     <ol style="margin: 0; padding-left: 18px; color: #78350f; font-size: 14px; line-height: 1.8;">
-                                        <li>Visit <a href="${baseUrl}" style="color: #1e40af; font-weight: 600;">${baseUrl}</a></li>
+                                        <li>Visit <a href="${baseUrl}" style="color: #0B2545; font-weight: 600;">${baseUrl}</a></li>
                                         <li>Enter your tracking number <strong>${trackingNumber}</strong> in the tracking field</li>
                                         <li>Enter this email address (<strong>${user_email}</strong>) to verify your identity</li>
                                         <li>Click <strong>"Track Shipment"</strong> to see live updates</li>
@@ -609,13 +622,13 @@ app.post('/api/admin/shipments', authenticate, isAdmin, (req, res) => {
                                     <p style="margin: 0; color: #15803d; font-size: 14px; line-height: 1.6;">
                                         When you track your shipment for the first time, an account will be <strong>automatically created</strong> for you.
                                         You'll be redirected to your personal dashboard where you can view all your shipments, tracking history, and receive future updates.
-                                        You can also <a href="${baseUrl}" style="color: #1e40af; font-weight: 600;">sign up directly</a> on our website.
+                                        You can also <a href="${baseUrl}" style="color: #0B2545; font-weight: 600;">sign up directly</a> on our website.
                                     </p>
                                 </div>
 
                                 <p style="color: #6b7280; font-size: 13px; margin-top: 25px; text-align: center; border-top: 1px solid #e5e7eb; padding-top: 15px;">
-                                    If you have any questions, reply to this email or visit our <a href="${baseUrl}/contact.html" style="color: #1e40af;">Contact Page</a>.<br>
-                                    Thank you for choosing <strong>SwiftNav Logistics</strong>! 🚀
+                                    If you have any questions, reply to this email or visit our <a href="${baseUrl}/contact.html" style="color: #0B2545;">Contact Page</a>.<br>
+                                    Thank you for choosing <strong>Demars International</strong>! 🌐
                                 </p>
                             </div>
                         </div>
@@ -624,7 +637,7 @@ app.post('/api/admin/shipments', authenticate, isAdmin, (req, res) => {
                     resend.emails.send({
                         from: EMAIL_FROM,
                         to: user_email,
-                        subject: `Your Shipment ${trackingNumber} Has Been Created — SwiftNav Logistics`,
+                        subject: `Your Shipment ${trackingNumber} Has Been Created — Demars International`,
                         html: welcomeHtml
                     }).then(() => {
                         console.log(`✅ Welcome email sent for ${trackingNumber} to ${user_email}`);
@@ -635,20 +648,20 @@ app.post('/api/admin/shipments', authenticate, isAdmin, (req, res) => {
 
                 // Send confirmation email to the sender
                 if (sender_email) {
-                    const baseUrl = process.env.BASE_URL || 'https://swiftnavlog.com';
+                    const baseUrl = process.env.BASE_URL || 'http://demarsint.com';
                     const senderHtml = `
                         <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
-                            <div style="background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
-                                <h1 style="color: #ffffff; margin: 0; font-size: 24px;">📦 SwiftNav Logistics</h1>
-                                <p style="color: #93c5fd; margin: 8px 0 0;">Shipment Confirmation</p>
+                            <div style="background: linear-gradient(135deg, #0B2545 0%, #051326 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0; border-bottom: 2px solid #C5A059;">
+                                <h1 style="color: #ffffff; margin: 0; font-size: 24px; letter-spacing: 1px;">Demars International</h1>
+                                <p style="color: #E5C158; margin: 8px 0 0; font-weight: 500;">Shipment Confirmation</p>
                             </div>
                             <div style="padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px;">
                                 <p style="font-size: 16px; color: #374151;">Hello <strong>${sender_name || 'Valued Customer'}</strong>,</p>
                                 <p style="color: #4b5563;">Your shipment has been successfully created and is now being processed. Here is a summary of your shipment:</p>
                                 
-                                <div style="background: #f0f9ff; border: 2px solid #1e3a8a; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center;">
+                                <div style="background: #f8fafc; border: 2px solid #0B2545; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center;">
                                     <p style="margin: 0 0 5px; color: #6b7280; font-size: 13px; text-transform: uppercase; letter-spacing: 1px;">Tracking Number</p>
-                                    <h2 style="margin: 0; color: #1e3a8a; font-size: 28px; letter-spacing: 2px;">${trackingNumber}</h2>
+                                    <h2 style="margin: 0; color: #0B2545; font-size: 28px; letter-spacing: 2px;">${trackingNumber}</h2>
                                 </div>
 
                                 <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
@@ -665,14 +678,14 @@ app.post('/api/admin/shipments', authenticate, isAdmin, (req, res) => {
                                     <h3 style="margin: 0 0 10px; color: #92400e; font-size: 15px;">📋 Track Your Shipment</h3>
                                     <p style="margin: 0; color: #78350f; font-size: 14px; line-height: 1.6;">
                                         You can track your shipment at any time by visiting 
-                                        <a href="${baseUrl}" style="color: #1e40af; font-weight: 600;">${baseUrl}</a> 
+                                        <a href="${baseUrl}" style="color: #0B2545; font-weight: 600;">${baseUrl}</a> 
                                         and entering your tracking number <strong>${trackingNumber}</strong>.
                                     </p>
                                 </div>
 
                                 <p style="color: #6b7280; font-size: 13px; margin-top: 25px; text-align: center; border-top: 1px solid #e5e7eb; padding-top: 15px;">
-                                    If you have any questions, reply to this email or visit our <a href="${baseUrl}/contact.html" style="color: #1e40af;">Contact Page</a>.<br>
-                                    Thank you for choosing <strong>SwiftNav Logistics</strong>! 🚀
+                                    If you have any questions, reply to this email or visit our <a href="${baseUrl}/contact.html" style="color: #0B2545;">Contact Page</a>.<br>
+                                    Thank you for choosing <strong>Demars International</strong>! 🌐
                                 </p>
                             </div>
                         </div>
@@ -681,7 +694,7 @@ app.post('/api/admin/shipments', authenticate, isAdmin, (req, res) => {
                     resend.emails.send({
                         from: EMAIL_FROM,
                         to: sender_email,
-                        subject: `Shipment Confirmation: ${trackingNumber} — SwiftNav Logistics`,
+                        subject: `Shipment Confirmation: ${trackingNumber} — Demars International`,
                         html: senderHtml
                     }).then(() => {
                         console.log(`✅ Sender confirmation email sent for ${trackingNumber} to ${sender_email}`);
@@ -771,7 +784,7 @@ app.post('/api/admin/shipments/:trackingNumber/events', authenticate, isAdmin, a
             const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=1`;
 
             const geocodePromise = new Promise((resolve) => {
-                https.get(url, { headers: { 'User-Agent': 'SwiftNavLogisticsApp/1.0' } }, (resp) => {
+                https.get(url, { headers: { 'User-Agent': 'DemarsInternationalApp/1.0' } }, (resp) => {
                     let data = '';
                     resp.on('data', (chunk) => { data += chunk; });
                     resp.on('end', () => {
@@ -841,17 +854,17 @@ app.post('/api/admin/shipments/:trackingNumber/events', authenticate, isAdmin, a
                     const clientEmail = (shipmentInfo && (shipmentInfo.receiver_email || shipmentInfo.account_email || '').trim()) || '';
                     if (shipmentInfo && clientEmail) {
                         try {
-                            const statusColor = status_marker === 'Delivered' ? '#22c55e' : (status_marker === 'In Transit' ? '#3b82f6' : '#f59e0b');
+                            const statusColor = status_marker === 'Delivered' ? '#22c55e' : (status_marker === 'In Transit' ? '#3b82f6' : '#C5A059');
                             const statusIcon = status_marker === 'Delivered' ? '✅' : (status_marker === 'In Transit' ? '🚚' : '📋');
-                            const updateBaseUrl = process.env.BASE_URL || 'https://swiftnavlog.com';
+                            const updateBaseUrl = process.env.BASE_URL || 'http://demarsint.com';
                             const clientName = shipmentInfo.receiver_name || shipmentInfo.user_name || 'Valued Customer';
                             const updateHtml = buildEmailTemplate('Shipment Update', `${statusIcon} ${status_marker}`, `
                             <p style="font-size: 16px; color: #374151;">Hello <strong>${clientName}</strong>,</p>
                             <p style="color: #4b5563;">There's a new update on your shipment:</p>
                             
-                            <div style="background: #f0f9ff; border: 2px solid #1e3a8a; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center;">
+                            <div style="background: #f8fafc; border: 2px solid #0B2545; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center;">
                                 <p style="margin: 0 0 5px; color: #6b7280; font-size: 13px; text-transform: uppercase; letter-spacing: 1px;">Tracking Number</p>
-                                <h2 style="margin: 0; color: #1e3a8a; font-size: 28px; letter-spacing: 2px;">${trackingNumber}</h2>
+                                <h2 style="margin: 0; color: #0B2545; font-size: 28px; letter-spacing: 2px;">${trackingNumber}</h2>
                             </div>
 
                             <div style="background: ${statusColor}15; border-left: 4px solid ${statusColor}; padding: 18px; border-radius: 4px; margin: 20px 0;">
@@ -865,13 +878,13 @@ app.post('/api/admin/shipments/:trackingNumber/events', authenticate, isAdmin, a
                             </table>
 
                             <div style="text-align: center; margin: 25px 0;">
-                                <a href="${updateBaseUrl}" style="display: inline-block; background: linear-gradient(135deg, #1e3a8a, #1e40af); color: #ffffff; text-decoration: none; padding: 14px 35px; border-radius: 8px; font-weight: 600; font-size: 15px;">🔍 Track Your Shipment Live</a>
+                                <a href="${updateBaseUrl}" style="display: inline-block; background: linear-gradient(135deg, #0B2545, #051326); border: 1px solid #C5A059; color: #ffffff; text-decoration: none; padding: 14px 35px; border-radius: 8px; font-weight: 600; font-size: 15px;">🔍 Track Your Shipment Live</a>
                             </div>
                         `);
                             await resend.emails.send({
                                 from: EMAIL_FROM,
                                 to: clientEmail,
-                                subject: `${statusIcon} Shipment Update: ${trackingNumber} — ${status_marker}`,
+                                subject: `${statusIcon} Shipment Update: ${trackingNumber} — ${status_marker} | Demars International`,
                                 html: updateHtml
                             });
                             console.log(`✅ Email sent for ${trackingNumber} to ${clientEmail}`);
@@ -882,11 +895,11 @@ app.post('/api/admin/shipments/:trackingNumber/events', authenticate, isAdmin, a
 
                     // SMS Notification
                     if (shipmentInfo && shipmentInfo.receiver_phone) {
-                        const smsBody = `📦 SwiftNav Logistics\n\nShipment ${trackingNumber} Update:\n• Status: ${status_marker}\n• Location: ${location || 'N/A'}\n• Time: ${current_date_time || 'N/A'}\n\n${description || ''}\n\nTrack live: ${process.env.BASE_URL || 'https://swiftnavlog.com'}`;
+                        const smsBody = `Demars International\n\nShipment ${trackingNumber} Update:\n• Status: ${status_marker}\n• Location: ${location || 'N/A'}\n• Time: ${current_date_time || 'N/A'}\n\n${description || ''}\n\nTrack live: ${process.env.BASE_URL || 'http://demarsint.com'}`;
                         sendSMS(shipmentInfo.receiver_phone, smsBody);
                     }
                     if (shipmentInfo && shipmentInfo.sender_phone && shipmentInfo.sender_phone !== shipmentInfo.receiver_phone) {
-                        const senderSmsBody = `📦 SwiftNav Logistics\n\nYour shipment ${trackingNumber} has been updated:\n• Status: ${status_marker}\n• Location: ${location || 'N/A'}\n\nTrack live: ${process.env.BASE_URL || 'https://swiftnavlog.com'}`;
+                        const senderSmsBody = `Demars International\n\nYour shipment ${trackingNumber} has been updated:\n• Status: ${status_marker}\n• Location: ${location || 'N/A'}\n\nTrack live: ${process.env.BASE_URL || 'http://demarsint.com'}`;
                         sendSMS(shipmentInfo.sender_phone, senderSmsBody);
                     }
                 });
@@ -1001,7 +1014,7 @@ app.post('/api/contact', async (req, res) => {
 
     const customerHtml = buildEmailTemplate('Message Received', 'We Got Your Message!', `
         <p style="font-size: 16px; color: #374151;">Hello <strong>${name}</strong>,</p>
-        <p style="color: #4b5563;">Thank you for reaching out to SwiftNav Logistics! We've received your message and our team is reviewing it.</p>
+        <p style="color: #4b5563;">Thank you for reaching out to Demars International! We've received your message and our team is reviewing it.</p>
         
         <div style="background: #f0fdf4; border-left: 4px solid #22c55e; padding: 18px; border-radius: 4px; margin: 20px 0;">
             <h3 style="margin: 0 0 8px; color: #166534; font-size: 15px;">⏱️ What Happens Next?</h3>
@@ -1028,7 +1041,7 @@ app.post('/api/contact', async (req, res) => {
         await resend.emails.send({
             from: EMAIL_FROM,
             to: email,
-            subject: '✅ We received your message — SwiftNav Logistics',
+            subject: '✅ We received your message — Demars International',
             html: customerHtml
         });
 

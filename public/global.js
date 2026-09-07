@@ -1,5 +1,5 @@
 /**
- * SwiftNav Logistics — Global Site Enhancements
+ * Demars International — Global Site Enhancements
  * #2  Toast Notifications
  * #11 Smooth Page Transitions
  * #12 Dark Mode Toggle
@@ -109,8 +109,8 @@
     /* =============================================
      * #12 DARK MODE TOGGLE
      * ============================================= */
-    const DARK_KEY = 'swiftnav_dark_mode';
-    const savedDark = localStorage.getItem(DARK_KEY) === 'true';
+    const DARK_KEY = 'demars_dark_mode';
+    const savedDark = (localStorage.getItem(DARK_KEY) || localStorage.getItem('swiftnav_dark_mode')) === 'true';
     if (savedDark) document.documentElement.setAttribute('data-theme', 'dark');
 
     function injectDarkModeStyles() {
@@ -118,34 +118,36 @@
         style.id = 'dark-mode-styles';
         style.textContent = `
             [data-theme="dark"] {
-                --clr-surface: #0f172a;
-                --clr-surface-alt: #1e293b;
+                --clr-surface: #0a1120;
+                --clr-surface-alt: #101c33;
                 --clr-text: #f1f5f9;
                 --clr-text-muted: #94a3b8;
-                --clr-border: #334155;
-                --clr-secondary-light: #1e3a8a33;
+                --clr-border: #1e2e4a;
+                --clr-secondary-light: rgba(11, 37, 69, 0.4);
+                --clr-primary: #D4AF37;
             }
-            [data-theme="dark"] body { background: #0f172a; color: #f1f5f9; }
-            [data-theme="dark"] .navbar { background: rgba(15,23,42,0.95) !important; border-color: #334155; }
-            [data-theme="dark"] .nav-links.open { background: #1e293b !important; }
+            [data-theme="dark"] body { background: #0a1120; color: #f1f5f9; }
+            [data-theme="dark"] .navbar { background: rgba(10, 17, 32, 0.95) !important; border-color: #1e2e4a; }
+            [data-theme="dark"] .brand-title { color: #ffffff !important; }
+            [data-theme="dark"] .nav-links.open { background: #101c33 !important; }
             [data-theme="dark"] .tracking-widget, [data-theme="dark"] .modal-content,
             [data-theme="dark"] .orders-section, [data-theme="dark"] .card-panel,
             [data-theme="dark"] .details-pane, [data-theme="dark"] .create-section,
             [data-theme="dark"] .shipment-card {
-                background: #1e293b !important; border-color: #334155 !important; color: #f1f5f9;
+                background: #101c33 !important; border-color: #1e2e4a !important; color: #f1f5f9;
             }
             [data-theme="dark"] input, [data-theme="dark"] select, [data-theme="dark"] textarea {
-                background: #0f172a !important; color: #f1f5f9 !important; border-color: #334155 !important;
+                background: #0a1120 !important; color: #f1f5f9 !important; border-color: #1e2e4a !important;
             }
-            [data-theme="dark"] .orders-table th { background: #0f172a !important; color: #94a3b8; }
-            [data-theme="dark"] .orders-table td { border-color: #334155 !important; }
-            [data-theme="dark"] .stat-card { background: #1e293b !important; border-color: #334155 !important; }
-            [data-theme="dark"] .footer { background: #020617; }
-            [data-theme="dark"] #whatsapp-fab-menu { background: #1e293b; }
+            [data-theme="dark"] .orders-table th { background: #0a1120 !important; color: #94a3b8; }
+            [data-theme="dark"] .orders-table td { border-color: #1e2e4a !important; }
+            [data-theme="dark"] .stat-card { background: #101c33 !important; border-color: #1e2e4a !important; }
+            [data-theme="dark"] .footer { background: #051326; }
+            [data-theme="dark"] #whatsapp-fab-menu { background: #101c33; }
             [data-theme="dark"] #whatsapp-fab-menu a { color: #f1f5f9; }
             [data-theme="dark"] #whatsapp-fab-menu a:hover { background: #14532d; }
-            [data-theme="dark"] .hero { background: linear-gradient(135deg, #0c1a42 0%, #020617 100%) !important; }
-            [data-theme="dark"] #page-fade-overlay { background: #0f172a; }
+            [data-theme="dark"] .hero { background: linear-gradient(135deg, #07192f 0%, #051326 100%) !important; }
+            [data-theme="dark"] #page-fade-overlay { background: #0a1120; }
         `;
         document.head.appendChild(style);
     }
@@ -199,7 +201,7 @@
         width: 44px; height: 44px; border-radius: 50%;
         background: var(--clr-secondary); color: white;
         border: none; font-size: 1.2rem; cursor: pointer;
-        box-shadow: 0 4px 16px rgba(30,58,138,0.35);
+        box-shadow: 0 4px 16px rgba(11,37,69,0.35);
         opacity: 0; transform: translateY(10px);
         transition: opacity 0.3s ease, transform 0.3s ease;
         pointer-events: none; display: flex; align-items: center; justify-content: center;

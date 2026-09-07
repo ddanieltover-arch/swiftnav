@@ -1,19 +1,23 @@
 /* === Core Variables === */
 :root {
-    /* Colors - Maritime Blue & Energetic Orange */
+    /* Colors - Demars International Deep Imperial Navy & Metallic Gold */
     --clr-surface: #ffffff;
     --clr-surface-alt: #f1f5f9;
-    --clr-text: #0f172a;
-    --clr-text-muted: #64748b;
+    --clr-text: #0b1528;
+    --clr-text-muted: #5b6b82;
 
-    --clr-primary: #f97316;
-    /* Energetic Orange */
-    --clr-primary-hover: #ea580c;
+    --clr-primary: #C5A059;
+    /* Metallic Gold */
+    --clr-primary-hover: #b38728;
+    --clr-primary-light: #fdf8eb;
+    --clr-gold: #D4AF37;
+    --clr-gold-gradient: linear-gradient(135deg, #e6c568 0%, #C5A059 50%, #9f7523 100%);
 
-    --clr-secondary: #1e3a8a;
-    /* Deep Maritime Blue */
-    --clr-secondary-hover: #1e40af;
-    --clr-secondary-light: #eff6ff;
+    --clr-secondary: #0B2545;
+    /* Deep Imperial Navy */
+    --clr-secondary-hover: #07192F;
+    --clr-secondary-light: #eef3f9;
+    --clr-navy-dark: #051326;
 
     --clr-success: #10b981;
     --clr-border: #e2e8f0;
@@ -36,7 +40,7 @@
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
     --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-    --shadow-glow: 0 0 20px rgba(249, 115, 22, 0.4);
+    --shadow-glow: 0 0 20px rgba(197, 160, 89, 0.45);
 }
 
 /* === Reset & Base Styles === */
@@ -114,42 +118,69 @@ svg {
 
 /* === Animated Contact Banner (Desktop Only) === */
 .marquee-banner {
-    background: #f97316;
-    /* Energetic Orange */
-    color: white;
+    background: #0B2545;
+    /* Deep Imperial Navy */
+    color: #f8fafc;
     padding: 0.6rem 0;
     overflow: hidden;
     position: relative;
     white-space: nowrap;
     display: flex;
     align-items: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(212, 175, 55, 0.35);
 }
 
 .marquee-content {
     display: flex;
-    gap: 3rem;
-    /* Reverse animation: moving left to right */
-    animation: marquee-scroll-reverse 20s linear infinite;
+    align-items: center;
+    width: max-content;
+    animation: marquee-scroll 25s linear infinite;
     will-change: transform;
+}
+
+.marquee-track {
+    display: flex;
+    align-items: center;
+    gap: 3rem;
+    padding-right: 3rem;
+    flex-shrink: 0;
 }
 
 .marquee-banner:hover .marquee-content {
     animation-play-state: paused;
 }
 
+.marquee-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-shrink: 0;
+    font-size: 0.9rem;
+    line-height: 1;
+}
+
+.marquee-item svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    display: block;
+}
+
 .marquee-item .whatsapp-icon {
+    width: 1.05em;
+    height: 1.05em;
+    vertical-align: unset;
     filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.25));
 }
 
-/* Scroll left to right */
-@keyframes marquee-scroll-reverse {
+/* Scroll right to left */
+@keyframes marquee-scroll {
     0% {
-        transform: translateX(-50%);
+        transform: translateX(0);
     }
 
     100% {
-        transform: translateX(0);
+        transform: translateX(-50%);
     }
 }
 
@@ -180,12 +211,14 @@ svg {
 }
 
 .btn-primary {
-    background-color: var(--clr-primary);
-    color: white;
+    background: var(--clr-gold-gradient);
+    color: #051326;
+    font-weight: 700;
 }
 
 .btn-primary:hover {
-    background-color: var(--clr-primary-hover);
+    background: linear-gradient(135deg, #eed07a 0%, #b8913b 50%, #8c6418 100%);
+    color: #000000;
     transform: translateY(-2px);
     box-shadow: var(--shadow-glow);
 }
@@ -233,10 +266,40 @@ svg {
 .brand {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    font-size: 1.5rem;
-    font-weight: 700;
+    gap: 0.85rem;
+    font-size: 1.35rem;
+    font-weight: 800;
     color: var(--clr-secondary);
+    text-decoration: none;
+}
+
+.brand-logo {
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.brand-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.15;
+}
+
+.brand-title {
+    font-size: 1.2rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    color: var(--clr-secondary);
+}
+
+.brand-subtitle {
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 1.8px;
+    color: var(--clr-primary);
+    text-transform: uppercase;
 }
 
 .brand svg {
@@ -274,7 +337,7 @@ svg {
     min-height: 90vh;
     display: flex;
     align-items: center;
-    background: linear-gradient(135deg, var(--clr-secondary) 0%, #0f172a 100%);
+    background: linear-gradient(135deg, var(--clr-secondary) 0%, var(--clr-navy-dark) 100%);
     color: white;
     overflow: hidden;
 }
@@ -321,10 +384,10 @@ svg {
     width: 100%;
     height: 100%;
     z-index: 1;
-    /* We'll use CSS shapes to create a nice background effect instead of an image, keeping it self-contained */
+    /* Rich navy & gold ambient illumination */
     background-image:
-        radial-gradient(circle at 15% 50%, rgba(249, 115, 22, 0.15), transparent 25%),
-        radial-gradient(circle at 85% 30%, rgba(30, 58, 138, 0.4), transparent 30%);
+        radial-gradient(circle at 15% 50%, rgba(197, 160, 89, 0.16), transparent 28%),
+        radial-gradient(circle at 85% 30%, rgba(11, 37, 69, 0.65), transparent 35%);
 }
 
 /* === Tracking Widget === */
@@ -463,13 +526,20 @@ svg {
 .image-overlay-gradient {
     position: relative;
     width: 100%;
-    height: 200px;
+    height: 220px;
+    overflow: hidden;
 }
 
 .image-overlay-gradient img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    object-position: center;
+    transition: transform 0.4s ease;
+}
+
+.service-card:hover .image-overlay-gradient img {
+    transform: scale(1.04);
 }
 
 /* === Tracking Details Timeline === */
@@ -533,7 +603,7 @@ svg {
 .timeline-item.active .timeline-marker {
     background-color: var(--clr-primary);
     border-color: var(--clr-primary);
-    box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.2);
+    box-shadow: 0 0 0 4px rgba(197, 160, 89, 0.3);
 }
 
 .timeline-item.completed::before {
@@ -581,6 +651,157 @@ svg {
     z-index: 1;
 }
 
+/* === Homepage Content Sections === */
+.home-values-section,
+.home-process-section,
+.home-industries-section,
+.home-corridors-section {
+    padding: 5rem 0;
+}
+
+.home-values-section {
+    background: var(--clr-surface);
+}
+
+.home-process-section {
+    background: linear-gradient(180deg, var(--clr-secondary-light) 0%, var(--clr-surface) 100%);
+}
+
+.home-industries-section {
+    background: var(--clr-surface-alt);
+}
+
+.home-corridors-section {
+    background: var(--clr-surface);
+    border-top: 1px solid var(--clr-border);
+}
+
+.home-values-grid,
+.home-process-grid,
+.home-industries-grid,
+.home-corridors-grid {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.home-values-grid,
+.home-process-grid,
+.home-corridors-grid {
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+}
+
+.home-industries-grid {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.home-value,
+.home-process-step,
+.home-industry,
+.home-corridor {
+    background: var(--clr-surface);
+    border: 1px solid var(--clr-border);
+    border-radius: var(--radius-md);
+    padding: 1.75rem;
+    transition: border-color var(--transition-normal), transform var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.home-value:hover,
+.home-process-step:hover,
+.home-industry:hover,
+.home-corridor:hover {
+    border-color: rgba(197, 160, 89, 0.55);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+}
+
+.home-value-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    color: var(--clr-secondary);
+    background: linear-gradient(135deg, rgba(197, 160, 89, 0.18), rgba(11, 37, 69, 0.08));
+    border: 1px solid rgba(197, 160, 89, 0.3);
+}
+
+.home-value h3,
+.home-process-step h3,
+.home-industry h3,
+.home-corridor h3 {
+    color: var(--clr-secondary);
+    font-size: 1.15rem;
+    margin-bottom: 0.6rem;
+}
+
+.home-value p,
+.home-process-step p,
+.home-industry p,
+.home-corridor p {
+    color: var(--clr-text-muted);
+    font-size: 0.95rem;
+    line-height: 1.65;
+    margin: 0;
+}
+
+.home-process-grid {
+    list-style: none;
+    counter-reset: none;
+}
+
+.home-process-num {
+    display: inline-block;
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    color: var(--clr-primary);
+    margin-bottom: 0.75rem;
+}
+
+.home-corridor-label {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--clr-primary);
+    margin-bottom: 0.65rem;
+}
+
+.home-process-section .home-process-step {
+    background: rgba(255, 255, 255, 0.92);
+}
+
+.cta-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.cta-section .btn-secondary {
+    background: transparent;
+    color: #fff;
+    border: 1px solid rgba(212, 175, 55, 0.55);
+}
+
+.cta-section .btn-secondary:hover {
+    background: rgba(197, 160, 89, 0.15);
+    color: #fff;
+    border-color: var(--clr-gold);
+}
+
+@media (max-width: 640px) {
+    .home-values-section,
+    .home-process-section,
+    .home-industries-section,
+    .home-corridors-section {
+        padding: 3.5rem 0;
+    }
+}
+
 /* === CTA Section === */
 .cta-section {
     padding: 6rem 0;
@@ -607,7 +828,7 @@ svg {
 
 /* === Footer === */
 .footer {
-    background: #0f172a;
+    background: var(--clr-navy-dark);
     color: white;
     padding: 5rem 0 2rem;
 }
@@ -1275,7 +1496,7 @@ svg {
 
 /* === #4 Hero Section Upgrades === */
 .hero-highlight {
-    color: var(--clr-primary);
+    color: #F3CA68;
     position: relative;
 }
 
@@ -1286,7 +1507,9 @@ svg {
     font-size: 0.875rem;
     font-weight: 600;
     margin-bottom: 2rem;
-    color: #fb923c;
+    color: #F6D888;
+    background: rgba(197, 160, 89, 0.15);
+    border: 1px solid rgba(212, 175, 55, 0.35);
 }
 
 .hero-stats {
@@ -1411,7 +1634,7 @@ svg {
     border: 3px solid white;
     border-radius: 50%;
     position: relative;
-    box-shadow: 0 0 10px rgba(30, 58, 138, 0.4);
+    box-shadow: 0 0 10px rgba(11, 37, 69, 0.45);
 }
 
 .heartbeat-marker::after {

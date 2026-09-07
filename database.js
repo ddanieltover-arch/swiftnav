@@ -220,34 +220,53 @@ const initializeDatabase = async () => {
         try { await db.query(`ALTER TABLE TrackingEvents ADD COLUMN lat REAL`); } catch (e) { }
         try { await db.query(`ALTER TABLE TrackingEvents ADD COLUMN lng REAL`); } catch (e) { }
 
-        // Migration: change old admin email to new info email
+        // Safe migration: remap legacy admin login emails only.
+        // Never DROP tables, never wipe Shipments / TrackingEvents / customer Users.
+        // CREATE TABLE IF NOT EXISTS + ADD COLUMN above are additive and keep existing rows.
         try {
-            await db.query(`UPDATE Users SET email = 'info@swiftnavlog.com' WHERE email = 'admin@swiftnav.com'`);
-            await db.query(`UPDATE Users SET email = 'info@swiftnavlog.com' WHERE email = 'admin@swiftnavlog.com'`);
-            // Also delete any leftover rows with the old email to prevent duplicate logins
-            await db.query(`DELETE FROM Users WHERE email = 'admin@swiftnav.com'`);
-            console.log('✅ Migration: updated old admin emails to info@swiftnavlog.com');
+            const legacyAdminEmails = [
+                'info@swiftnavlog.com',
+                'admin@swiftnav.com',
+                'admin@swiftnavlog.com'
+            ];
+            for (const legacyEmail of legacyAdminEmails) {
+                // Prefer rename when the new admin email is not already taken
+                try {
+                    await db.query(
+                        `UPDATE Users SET email = 'info@demarsint.com' WHERE email = ? AND NOT EXISTS (SELECT 1 FROM Users WHERE email = 'info@demarsint.com')`,
+                        [legacyEmail]
+                    );
+                } catch (e) { /* unique conflict / dialect quirks — handled below */ }
+
+                // If both old and new exist, keep demars admin and drop only the unused legacy admin row
+                // (never deletes customers; only exact legacy admin emails)
+                await db.query(
+                    `DELETE FROM Users WHERE email = ? AND role = 'admin' AND email != 'info@demarsint.com'`,
+                    [legacyEmail]
+                );
+            }
+            console.log('✅ Migration: admin login email remapped to info@demarsint.com (shipments untouched)');
         } catch (e) {
             console.error('Migration failed for admin email update:', e);
         }
 
-        // Seed Admin (Awaited)
+        // Seed Admin only if missing — never overwrites existing admin password or other users
         await new Promise((resolve, reject) => {
-            db.get('SELECT * FROM Users WHERE email = ?', ['info@swiftnavlog.com'], async (err, user) => {
+            db.get('SELECT * FROM Users WHERE email = ?', ['info@demarsint.com'], async (err, user) => {
                 if (err) return reject(err);
                 if (!user) {
                     const hash = await bcrypt.hash('password123', 10);
                     db.run('INSERT INTO Users (name, email, password_hash, role) VALUES (?, ?, ?, ?)',
-                        ['System Admin', 'info@swiftnavlog.com', hash, 'admin'], (err) => {
+                        ['System Admin', 'info@demarsint.com', hash, 'admin'], (err) => {
                             if (err) reject(err);
                             else {
-                                console.log('✅ Admin account seeded: info@swiftnavlog.com / password123');
+                                console.log('✅ Admin account seeded: info@demarsint.com / password123');
                                 resolve();
                             }
                         });
                 } else {
                     if (user.role !== 'admin') {
-                        db.run('UPDATE Users SET role = ? WHERE email = ?', ['admin', 'info@swiftnavlog.com'], (err) => {
+                        db.run('UPDATE Users SET role = ? WHERE email = ?', ['admin', 'info@demarsint.com'], (err) => {
                             if (err) reject(err);
                             else resolve();
                         });
@@ -258,7 +277,7 @@ const initializeDatabase = async () => {
             });
         });
 
-        console.log('✅ Database Schema Verified.');
+        console.log('✅ Database Schema Verified (existing records preserved).');
     } catch (err) {
         console.error('❌ Database Init Error:', err.message);
     }

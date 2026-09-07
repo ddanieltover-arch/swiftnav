@@ -42,8 +42,8 @@
     const closeModals = document.querySelectorAll('.close-modal');
 
     // Check if user is logged in
-    const token = localStorage.getItem('swiftnav_token');
-    const userRole = localStorage.getItem('swiftnav_role');
+    const token = localStorage.getItem('demars_token') || localStorage.getItem('swiftnav_token');
+    const userRole = localStorage.getItem('demars_role') || localStorage.getItem('swiftnav_role');
     if (token) {
         loginBtn.classList.add('hidden');
         dashboardBtn.classList.remove('hidden');
@@ -118,6 +118,8 @@
             const data = await res.json();
 
             if (res.ok) {
+                localStorage.setItem('demars_token', data.token);
+                localStorage.setItem('demars_role', data.user.role);
                 localStorage.setItem('swiftnav_token', data.token);
                 localStorage.setItem('swiftnav_role', data.user.role);
                 window.location.href = data.user.role === 'admin' ? 'admin.html' : 'dashboard.html';
@@ -155,6 +157,8 @@
                     body: JSON.stringify({ email, password })
                 });
                 const loginData = await loginRes.json();
+                localStorage.setItem('demars_token', loginData.token);
+                localStorage.setItem('demars_role', loginData.user.role);
                 localStorage.setItem('swiftnav_token', loginData.token);
                 localStorage.setItem('swiftnav_role', loginData.user.role);
                 window.location.href = 'dashboard.html';
@@ -273,6 +277,8 @@
                 const data = await res.json();
 
                 if (res.ok) {
+                    localStorage.setItem('demars_token', data.token);
+                    localStorage.setItem('demars_role', data.user.role);
                     localStorage.setItem('swiftnav_token', data.token);
                     localStorage.setItem('swiftnav_role', data.user.role);
                     window.location.href = 'dashboard.html';
@@ -313,10 +319,10 @@
         maxZoom: 20
     }).addTo(map);
 
-    // Custom Icon (using a simple SVG marker for nice branding)
+    // Custom Icon (using a prestige gold SVG marker for Demars branding)
     const customIcon = L.divIcon({
         className: 'custom-map-marker',
-        html: `<div style="background-color: #f97316; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(249, 115, 22, 0.6);"></div>`,
+        html: `<div style="background-color: #C5A059; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(197, 160, 89, 0.7);"></div>`,
         iconSize: [20, 20],
         iconAnchor: [10, 10]
     });
@@ -344,7 +350,7 @@
     ];
 
     L.polyline(routeCoords, {
-        color: '#1e3a8a',
+        color: '#0B2545',
         weight: 3,
         opacity: 0.6,
         dashArray: '10, 10' // Dashed line for a route effect

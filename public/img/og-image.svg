@@ -1,23 +1,38 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="SwiftNav Logistics">
-  <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1e3a8a"/>
-      <stop offset="100%" stop-color="#0f172a"/>
-    </linearGradient>
-  </defs>
-  <rect width="1200" height="630" fill="url(#bg)"/>
-  <circle cx="1080" cy="80" r="220" fill="#1e40af" opacity="0.35"/>
-  <circle cx="80" cy="560" r="180" fill="#f97316" opacity="0.12"/>
-  <rect x="120" y="185" width="160" height="160" rx="36" fill="#ffffff"/>
-  <g fill="none" stroke="#f97316" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" transform="translate(148 218) scale(4.4)">
-    <path d="M2.38 18c1.62-.64 3.03-1 4.62-1s3 .36 4.62 1c1.59.64 3.03 1 4.62 1s3-.36 4.62-1"/>
-    <path d="m19 12-1 3H5l-1-3"/>
-    <path d="M5 12 7 6l2-1h4l2 1 2 6"/>
-    <path d="M12 2v2"/>
-    <path d="M10 2h4"/>
-  </g>
-  <text x="320" y="255" fill="#ffffff" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="64" font-weight="700">SwiftNav Logistics</text>
-  <text x="320" y="325" fill="#93c5fd" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="32" font-weight="500">Worldwide Freight Forwarding</text>
-  <text x="320" y="390" fill="#cbd5e1" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="24">Speed | Efficiency | Sustainability</text>
-  <rect x="320" y="440" width="180" height="6" rx="3" fill="#f97316"/>
-</svg>
+
+    <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="glow" cx="25%" cy="50%" r="60%">
+          <stop offset="0%" stop-color="#133e70" stop-opacity="0.6"/>
+          <stop offset="100%" stop-color="#051326" stop-opacity="1"/>
+        </radialGradient>
+        <linearGradient id="goldLine" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#D4AF37"/>
+          <stop offset="50%" stop-color="#C5A059"/>
+          <stop offset="100%" stop-color="rgba(197, 160, 89, 0)"/>
+        </linearGradient>
+      </defs>
+      
+      <rect width="1200" height="630" fill="#051326"/>
+      <rect width="1200" height="630" fill="url(#glow)"/>
+      
+      <!-- Subtle grid line accent -->
+      <line x1="480" y1="140" x2="480" y2="490" stroke="rgba(212, 175, 55, 0.25)" stroke-width="1"/>
+
+      <!-- Text Content -->
+      <g transform="translate(510, 0)">
+        <rect x="0" y="160" width="280" height="32" rx="16" fill="rgba(212, 175, 55, 0.15)" stroke="#D4AF37" stroke-width="1"/>
+        <text x="14" y="182" fill="#E5C158" font-family="'Segoe UI', system-ui, sans-serif" font-size="14" font-weight="700" letter-spacing="2">WORLDWIDE FREIGHT FORWARDING</text>
+        
+        <text x="0" y="255" fill="#FFFFFF" font-family="'Segoe UI', system-ui, sans-serif" font-size="52" font-weight="800" letter-spacing="1">DEMARS</text>
+        <text x="245" y="255" fill="#D4AF37" font-family="'Segoe UI', system-ui, sans-serif" font-size="52" font-weight="800" letter-spacing="1">INTERNATIONAL</text>
+
+        <rect x="0" y="285" width="460" height="4" fill="url(#goldLine)" rx="2"/>
+
+        <text x="0" y="335" fill="#E2E8F0" font-family="'Segoe UI', system-ui, sans-serif" font-size="24" font-weight="600" letter-spacing="4">SHIPPING BEYOND BORDERS</text>
+        
+        <text x="0" y="385" fill="#94A3B8" font-family="'Segoe UI', system-ui, sans-serif" font-size="18">Air Freight  •  Sea Freight  •  Land Freight  •  Courier Services</text>
+        
+        <text x="0" y="460" fill="#C5A059" font-family="'Segoe UI', system-ui, sans-serif" font-size="20" font-weight="600">demarsint.com</text>
+      </g>
+    </svg>
+  

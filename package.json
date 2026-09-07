@@ -1,7 +1,7 @@
 {
-  "name": "swiftnav-logistics",
+  "name": "demars-international",
   "version": "1.0.0",
-  "description": "SwiftNav Logistics - Worldwide Freight Forwarding Platform",
+  "description": "Demars International - Worldwide Freight Forwarding & Logistics Platform",
   "main": "server.js",
   "scripts": {
     "start": "node -r dotenv/config server.js",

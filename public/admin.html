@@ -4,26 +4,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="SwiftNav Logistics admin dashboard.">
+    <meta name="description" content="Demars International admin dashboard. Shipping Beyond Borders.">
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
     <link rel="icon" href="favicon-16.png" type="image/png" sizes="16x16">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
-    <meta name="theme-color" content="#1e3a8a">
+    <meta name="theme-color" content="#0B2545">
     <meta property="og:type" content="website">
-    <meta property="og:site_name" content="SwiftNav Logistics">
-    <meta property="og:image" content="https://swiftnavlog.com/img/og-image.png">
+    <meta property="og:site_name" content="Demars International">
+    <meta property="og:image" content="http://demarsint.com/img/og-image.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="SwiftNav Logistics">
+    <meta property="og:image:alt" content="Demars International">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:image" content="https://swiftnavlog.com/img/og-image.png">
-    <meta property="og:title" content="Admin Dashboard | SwiftNav Logistics">
-    <meta property="og:description" content="SwiftNav Logistics admin dashboard.">
-    <meta property="og:url" content="https://swiftnavlog.com/admin.html">
-    <meta name="twitter:title" content="Admin Dashboard | SwiftNav Logistics">
-    <meta name="twitter:description" content="SwiftNav Logistics admin dashboard.">
-    <title>Admin Dashboard | SwiftNav Logistics</title>
+    <meta name="twitter:image" content="http://demarsint.com/img/og-image.png">
+    <meta property="og:title" content="Admin Dashboard | Demars International">
+    <meta property="og:description" content="Demars International admin dashboard. Shipping Beyond Borders.">
+    <meta property="og:url" content="http://demarsint.com/admin.html">
+    <meta name="twitter:title" content="Admin Dashboard | Demars International">
+    <meta name="twitter:description" content="Demars International admin dashboard. Shipping Beyond Borders.">
+    <title>Admin Dashboard | Demars International</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="style.css">
@@ -804,7 +804,10 @@
 <body>
     <!-- Top Navigation -->
     <nav class="admin-topnav">
-        <a href="index.html" class="brand"><span>📦</span> SwiftNav</a>
+        <a href="index.html" class="brand" style="display:flex; align-items:center; gap:0.6rem;">
+            <img src="img/logo.png" alt="Demars International" style="width:34px; height:34px; object-fit:contain;">
+            <span>Demars Admin</span>
+        </a>
         <div class="nav-tabs">
             <a href="#" class="active" id="tab-dashboard">🏠 Dashboard</a>
             <a href="#" id="tab-shipments">📋 Shipments</a>
@@ -943,7 +946,7 @@
                 <div class="form-group">
                     <label>Shipment Carrier*</label>
                     <select id="cs-carrier" required>
-                        <option value="SwiftNav Logistics">SwiftNav Logistics</option>
+                        <option value="Demars International" selected>Demars International</option>
                     </select>
                 </div>
                 <div class="section-divider">
@@ -1050,7 +1053,7 @@
                         <option value="Van Move">Van Move</option>
                     </select></div>
                 <div class="form-group"><label>Shipment Carrier</label><select id="es-carrier" required>
-                        <option value="SwiftNav Logistics">SwiftNav Logistics</option>
+                        <option value="Demars International" selected>Demars International</option>
                     </select></div>
                 <div class="section-divider">
                     <h3>Sender</h3>
@@ -1214,8 +1217,8 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
-            const token = localStorage.getItem('swiftnav_token');
-            const role = localStorage.getItem('swiftnav_role');
+            const token = localStorage.getItem('demars_token') || localStorage.getItem('swiftnav_token');
+            const role = localStorage.getItem('demars_role') || localStorage.getItem('swiftnav_role');
             if (!token || role !== 'admin') { window.location.href = 'index.html'; return; }
 
             document.getElementById('logout-btn').addEventListener('click', () => { localStorage.clear(); window.location.href = 'index.html'; });
@@ -1416,7 +1419,7 @@
                 const rows = window.allShipments.filter(s => s.is_deleted !== 1).map(s => [s.tracking_number, s.status, s.receiver_name, s.carrier, s.sender_address, s.receiver_address, s.created_at]);
                 let csv = headers.join(',') + '\n' + rows.map(r => r.map(v => `"${(v || '').toString().replace(/"/g, '""')}"`).join(',')).join('\n');
                 const blob = new Blob([csv], { type: 'text/csv' });
-                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `swiftnav_shipments_${new Date().toISOString().split('T')[0]}.csv`; a.click();
+                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `demars_shipments_${new Date().toISOString().split('T')[0]}.csv`; a.click();
             });
 
             loadDashboard();
