@@ -222,31 +222,11 @@ const initializeDatabase = async () => {
         try { await db.query(`ALTER TABLE TrackingEvents ADD COLUMN lat REAL`); } catch (e) { }
         try { await db.query(`ALTER TABLE TrackingEvents ADD COLUMN lng REAL`); } catch (e) { }
 
-        // Safe migration: remap legacy admin login emails only.
-        // Never DROP tables, never wipe Shipments / TrackingEvents / customer Users.
-        // CREATE TABLE IF NOT EXISTS + ADD COLUMN above are additive and keep existing rows.
+        // Safe migration: remap legacy admin login emails only (shipments / customers untouched).
         try {
-            const legacyAdminEmails = [
-                'info@swiftnavlog.com',
-                'admin@swiftnav.com',
-                'admin@swiftnavlog.com'
-            ];
-            for (const legacyEmail of legacyAdminEmails) {
-                // Prefer rename when the new admin email is not already taken
-                try {
-                    await db.query(
-                        `UPDATE Users SET email = 'info@demarsint.com' WHERE email = ? AND NOT EXISTS (SELECT 1 FROM Users WHERE email = 'info@demarsint.com')`,
-                        [legacyEmail]
-                    );
-                } catch (e) { /* unique conflict / dialect quirks — handled below */ }
-
-                // If both old and new exist, keep demars admin and drop only the unused legacy admin row
-                // (never deletes customers; only exact legacy admin emails)
-                await db.query(
-                    `DELETE FROM Users WHERE email = ? AND role = 'admin' AND email != 'info@demarsint.com'`,
-                    [legacyEmail]
-                );
-            }
+            await db.query(`UPDATE Users SET email = 'info@demarsint.com' WHERE email = 'info@swiftnavlog.com' AND NOT EXISTS (SELECT 1 FROM Users WHERE email = 'info@demarsint.com')`);
+            await db.query(`UPDATE Users SET email = 'info@demarsint.com' WHERE email = 'admin@swiftnav.com' AND NOT EXISTS (SELECT 1 FROM Users WHERE email = 'info@demarsint.com')`);
+            await db.query(`UPDATE Users SET email = 'info@demarsint.com' WHERE email = 'admin@swiftnavlog.com' AND NOT EXISTS (SELECT 1 FROM Users WHERE email = 'info@demarsint.com')`);
             console.log('✅ Migration: admin login email remapped to info@demarsint.com (shipments untouched)');
         } catch (e) {
             console.error('Migration failed for admin email update:', e);
@@ -282,9 +262,11 @@ const initializeDatabase = async () => {
         console.log('✅ Database Schema Verified (existing records preserved).');
     } catch (err) {
         console.error('❌ Database Init Error:', err.message);
+        throw err;
     }
 };
 
-initializeDatabase();
+const ready = initializeDatabase();
+db.ready = ready;
 
 module.exports = db;

@@ -15,6 +15,18 @@ app.use(express.json());
 const path = require('path');
 app.use(express.static(path.join(__dirname, 'public'))); // Serve frontend files from public
 
+// Ensure schema/migrations finish before handling API traffic (critical on Vercel cold starts)
+app.use(async (req, res, next) => {
+    if (!req.path.startsWith('/api')) return next();
+    try {
+        if (db.ready) await db.ready;
+        next();
+    } catch (err) {
+        console.error('❌ Database not ready:', err.message);
+        res.status(503).json({ message: 'Database unavailable', detail: err.message });
+    }
+});
+
 // === Keep-Alive / Health Endpoint ===
 app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
