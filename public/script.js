@@ -312,11 +312,11 @@
         scrollWheelZoom: false // disable scroll zoom to prevent hijacking page scroll
     }).setView([40.7128, -74.0060], 4); // Centered near NY
 
-    // Add CartoDB Positron basemap for a clean, modern look matching the aesthetic
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        subdomains: 'abcd',
-        maxZoom: 20
+    // OpenStreetMap tiles (no API key required; CARTO now watermarks unauthenticated requests)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        subdomains: 'abc',
+        maxZoom: 19
     }).addTo(map);
 
     // Custom Icon (using a prestige gold SVG marker for Demars branding)
