@@ -10,6 +10,15 @@
     'use strict';
 
     /* =============================================
+     * Canonical host: apex → www
+     * Apex redirects strip Authorization headers and break authenticated /api calls.
+     * ============================================= */
+    if (location.hostname === 'demarsint.com') {
+        location.replace('https://www.demarsint.com' + location.pathname + location.search + location.hash);
+        return;
+    }
+
+    /* =============================================
      * #2  TOAST NOTIFICATION SYSTEM
      * ============================================= */
     const toastContainer = document.createElement('div');

@@ -836,7 +836,7 @@
             </div>
             <div class="greeting-actions">
                 <div id="db-status-tag" style="padding:4px 12px; border-radius:30px; font-size:0.75rem; font-weight:700; display:flex; align-items:center; gap:6px; background:#f1f5f9; color:#64748b; margin-right:15px;" title="Checking database persistence status...">
-                    <span style="width:8px; height:8px; border-radius:50%; background:#94a3b8;"></span> LOCAL (SQLite)
+                    <span style="width:8px; height:8px; border-radius:50%; background:#94a3b8;"></span> Checking…
                 </div>
                 <button class="btn-outline" id="export-csv-btn">⬇ Export CSV</button>
                 <button class="btn-filled" id="toggle-create-btn">📦 Add New Shipment</button>
@@ -1216,7 +1216,14 @@
     </div>
 
     <script>
+        // Apex → www: host redirects drop Authorization and break admin API calls
+        if (location.hostname === 'demarsint.com') {
+            location.replace('https://www.demarsint.com' + location.pathname + location.search + location.hash);
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
+            if (location.hostname === 'demarsint.com') return;
+
             const token = localStorage.getItem('demars_token') || localStorage.getItem('swiftnav_token');
             const role = localStorage.getItem('demars_role') || localStorage.getItem('swiftnav_role');
             if (!token || role !== 'admin') { window.location.href = 'index.html'; return; }
@@ -1270,12 +1277,22 @@
                 try {
                     const statRes = await fetch('/api/admin/stats', { headers: fetchHeaders });
                     const stats = await statRes.json();
-                    document.getElementById('stat-total').textContent = stats.totalShipments.toLocaleString();
-                    document.getElementById('stat-active').textContent = stats.activeShipments.toLocaleString();
-                    if (document.getElementById('stat-users')) document.getElementById('stat-users').textContent = stats.totalUsers || '0';
+                    if (!statRes.ok) {
+                        throw new Error(stats.message || `Stats failed (${statRes.status})`);
+                    }
+
+                    const total = Number(stats.totalShipments) || 0;
+                    const active = Number(stats.activeShipments) || 0;
+                    const users = Number(stats.totalUsers) || 0;
+                    document.getElementById('stat-total').textContent = total.toLocaleString();
+                    document.getElementById('stat-active').textContent = active.toLocaleString();
+                    if (document.getElementById('stat-users')) document.getElementById('stat-users').textContent = users.toLocaleString();
 
                     const shipRes = await fetch('/api/admin/shipments', { headers: fetchHeaders });
                     const shipments = await shipRes.json();
+                    if (!shipRes.ok || !Array.isArray(shipments)) {
+                        throw new Error((shipments && shipments.message) || `Shipments failed (${shipRes.status})`);
+                    }
                     window.allShipments = shipments;
 
                     // Calculate pending & delivered
@@ -1292,7 +1309,19 @@
 
                     // Update live tracking
                     updateLiveTracking(shipments);
-                } catch (err) { console.error("Failed to load admin dashboard", err); }
+                    updateDBStatus(true);
+                } catch (err) {
+                    console.error("Failed to load admin dashboard", err);
+                    updateDBStatus(false, err.message);
+                    if (/access denied|invalid token|admin access/i.test(err.message || '')) {
+                        alert('Your admin session expired. Please sign in again.');
+                        localStorage.removeItem('demars_token');
+                        localStorage.removeItem('demars_role');
+                        localStorage.removeItem('swiftnav_token');
+                        localStorage.removeItem('swiftnav_role');
+                        window.location.href = 'index.html';
+                    }
+                }
             }
 
             // Search and Filter logic
@@ -1513,20 +1542,29 @@
             });
 
             // Update DB Status Tag
-            function updateDBStatus() {
+            function updateDBStatus(ok, detail) {
                 const tag = document.getElementById('db-status-tag');
-                if (window.allShipments && window.location.hostname === 'localhost') {
+                if (!tag) return;
+                const isLocalHost = /^(localhost|127\.0\.0\.1)$/i.test(window.location.hostname);
+                if (!ok) {
+                    tag.innerHTML = '<span style="width:8px; height:8px; border-radius:50%; background:#ef4444;"></span> API ERROR';
+                    tag.style.background = '#fee2e2';
+                    tag.style.color = '#b91c1c';
+                    tag.title = detail || 'Failed to load dashboard data from the API.';
+                    return;
+                }
+                if (isLocalHost) {
                     tag.innerHTML = '<span style="width:8px; height:8px; border-radius:50%; background:#f59e0b;"></span> LOCAL (SQLite)';
+                    tag.style.background = '#fffbeb';
+                    tag.style.color = '#92400e';
                     tag.title = "Local storage is persistent on your machine, but won't sync to production.";
-                } else if (window.allShipments) {
+                } else {
                     tag.innerHTML = '<span style="width:8px; height:8px; border-radius:50%; background:#22c55e;"></span> PRODUCTION (PostgreSQL)';
-                    tag.style.background = '#dcfce7'; 
+                    tag.style.background = '#dcfce7';
                     tag.style.color = '#15803d';
                     tag.title = "Your shipments are safe in a persistent cloud database.";
                 }
             }
-            // Call it after loading
-            setTimeout(updateDBStatus, 1000);
 
             // Create Shipment
             document.getElementById('create-shipment-form').addEventListener('submit', async (e) => {

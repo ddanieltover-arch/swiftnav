@@ -940,9 +940,9 @@ app.get('/api/admin/stats', authenticate, isAdmin, (req, res) => {
         db.get(`SELECT COUNT(*) as active FROM Shipments WHERE status != 'Delivered' AND COALESCE(is_deleted, 0) != 1`, (err, activeShipments) => {
             db.get(`SELECT COUNT(*) as users FROM Users`, (err, totalUsers) => {
                 res.json({
-                    totalShipments: totalShipments ? (totalShipments.total || totalShipments.totalshipments || 0) : 0,
-                    activeShipments: activeShipments ? (activeShipments.active || activeShipments.activeshipments || 0) : 0,
-                    totalUsers: totalUsers ? (totalUsers.users || totalUsers.totalusers || 0) : 0
+                    totalShipments: Number(totalShipments ? (totalShipments.total || totalShipments.totalshipments || 0) : 0),
+                    activeShipments: Number(activeShipments ? (activeShipments.active || activeShipments.activeshipments || 0) : 0),
+                    totalUsers: Number(totalUsers ? (totalUsers.users || totalUsers.totalusers || 0) : 0)
                 });
             });
         });

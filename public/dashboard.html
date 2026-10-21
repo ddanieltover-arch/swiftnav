@@ -278,7 +278,14 @@
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <script>
+        // Apex → www: host redirects drop Authorization and break authenticated /api calls
+        if (location.hostname === 'demarsint.com') {
+            location.replace('https://www.demarsint.com' + location.pathname + location.search + location.hash);
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
+            if (location.hostname === 'demarsint.com') return;
+
             const token = localStorage.getItem('demars_token') || localStorage.getItem('swiftnav_token');
             if (!token) {
                 window.location.href = 'index.html';
