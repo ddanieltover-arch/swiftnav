@@ -889,18 +889,6 @@ svg {
     color: #1dae57 !important;
 }
 
-.usa-contact-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem 0.85rem;
-    margin-top: 0.35rem;
-}
-
-.usa-contact-actions a {
-    font-size: 0.8rem;
-    font-weight: 600;
-}
-
 #whatsapp-fab {
     position: fixed;
     left: 1.15rem;
