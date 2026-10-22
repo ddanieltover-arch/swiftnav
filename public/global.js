@@ -242,18 +242,11 @@
     waFab.id = 'whatsapp-fab';
     waFab.innerHTML = `
         <div id="whatsapp-fab-menu" role="menu">
-            <a href="https://wa.me/61468108169" target="_blank" rel="noopener noreferrer" role="menuitem">
+            <a href="https://wa.me/447832675058" target="_blank" rel="noopener noreferrer" role="menuitem">
                 <span class="whatsapp-icon"></span>
                 <span>
-                    <span class="wa-label">WhatsApp only</span>
-                    <span class="wa-number">+61 468 108 169</span>
-                </span>
-            </a>
-            <a href="https://wa.me/17202557334" target="_blank" rel="noopener noreferrer" role="menuitem">
-                <span class="whatsapp-icon"></span>
-                <span>
-                    <span class="wa-label">USA WhatsApp</span>
-                    <span class="wa-number">+1 (720) 255-7334</span>
+                    <span class="wa-label">WhatsApp</span>
+                    <span class="wa-number">+44 7832 675058</span>
                 </span>
             </a>
         </div>
