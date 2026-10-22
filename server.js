@@ -1042,7 +1042,7 @@ app.post('/api/contact', async (req, res) => {
         
         <div style="background: #f0fdf4; border-left: 4px solid #22c55e; padding: 18px; border-radius: 4px; margin: 20px 0;">
             <h3 style="margin: 0 0 8px; color: #166534; font-size: 15px;">⏱️ What Happens Next?</h3>
-            <p style="margin: 0; color: #15803d; font-size: 14px; line-height: 1.6;">A member of our team will respond to your inquiry within <strong>24 hours</strong>. For urgent matters, you can reach us directly at our contact number.</p>
+            <p style="margin: 0; color: #15803d; font-size: 14px; line-height: 1.6;">A member of our team will respond to your inquiry within <strong>24 hours</strong>. For urgent matters, WhatsApp us on <strong>+44 7832 675058</strong>.</p>
         </div>
 
         <div style="background: #f9fafb; border-radius: 8px; padding: 18px; margin: 20px 0;">
